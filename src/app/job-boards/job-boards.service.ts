@@ -56,10 +56,17 @@ export class JobBoardsService {
         return this.http.post<ResponseDetails>(this.endpoint + 'getResumePath', request);
     }
 
+    FetchRecruiterList(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'FetchRecruiterList', request);
+    }
+    updateCandidateNotes(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'updateCandidateNotes', request);
+    }
+
     /* CB API */
 
     getCBAuthToken(): Observable<ResponseDetails> {
-        return this.http.post<ResponseDetails>(this.endpoint + 'getCBAuthToken', null);
+        return this.http.post<ResponseDetails>(this.endpoint + 'CBrefresh', null);
     }
 
     getCBResumes(request: any): Observable<ResponseDetails> {
@@ -123,11 +130,22 @@ export class JobBoardsService {
         return this.http.get<ResponseDetails>('https://talent-api.dice.com/v2/profiles/search?' + request, httpOptions);
     }
 
+    getDiceIntelliSearch(request: any, token: string): Observable<ResponseDetails> {
+        let httpOptions = {
+            headers: new HttpHeaders({'Content-Type': 'application/json', 'Authorization': 'bearer ' + token }),
+        };
+        return this.http.post<ResponseDetails>('https://talent-api.dice.com/v2/profiles/search',request, httpOptions);
+    }
+
     getDiceProfileView(request: any, token: string): Observable<ResponseDetails> {
         let httpOptions = {
             headers: new HttpHeaders({ 'Authorization': 'bearer ' + token }),
         };
         return this.http.get<ResponseDetails>('https://talent-api.dice.com/v2/profiles/' + request, httpOptions);
+    }
+
+    getDiceToken(): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getDiceAuthToken', null);
     }
 
     //Jooble API
@@ -186,6 +204,33 @@ export class JobBoardsService {
     getResumes2(request: any): Observable<ResponseDetails> {
         return this.http.post<ResponseDetails>(this.endpoint + 'getResumes2', request);
     }
+    
+    getResumes3(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getResumes3', request);
+    }
+
+    /* OPT Nation API*/
+    optresumesearch(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'optresumesearch', request);
+    }
+
+    optresumeopen(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'optresumeopen', request);
+    }
+
+    optSaveResume(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'optSaveResume', request);
+    }
+    getjobtitle(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getjobtitle', request);
+    }
+    insertcandidatejob(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'insertcandidatejob', request);
+    }
+    getLocation(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getLocation', request);
+      }
+    
 }
 
 export interface ResponseDetails {

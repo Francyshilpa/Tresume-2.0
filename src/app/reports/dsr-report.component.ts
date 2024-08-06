@@ -3,9 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { formatDate } from '@angular/common';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { CookieService } from 'ngx-cookie-service';
 import { DashboardService, RequestItem } from '../dashboard/dashboard.service';
 import { ReportsService } from './reports.service';
 import { GridOptions, ColDef, RowNode, Column, GridApi } from 'ag-grid-community';
+import * as XLSX from 'xlsx';
 
 
 
@@ -18,7 +20,7 @@ interface IRange {
     selector: 'app-reports',
     templateUrl: './dsr-report.component.html',
     styleUrls: ['./reports.component.scss'],
-    providers: [DashboardService, ReportsService]
+    providers: [DashboardService, ReportsService, CookieService]
 })
 export class DSRReportComponent implements OnInit {
 
@@ -44,10 +46,10 @@ export class DSRReportComponent implements OnInit {
     }];
 
     columnDefs = [
-        { field: 'SubmissionID', headerName: 'Submission ID', sortable: true, filter: true, resizable: true },
-        { field: 'CandidateName', headerName: 'Candidate Name', sortable: true, filter: true, resizable: true },
-        { field: 'MarketerName', headerName: 'Marketer Name', sortable: true, filter: true, resizable: true },
-        { field: 'Title', sortable: true, filter: true, resizable: true },
+        { field: 'submissionid', headerName: 'Submission ID', sortable: true, filter: true, resizable: true },
+        { field: 'Candidate', headerName: 'Candidate Name', sortable: true, filter: true, resizable: true },
+        { field: 'Marketer', headerName: 'Marketer Name', sortable: true, filter: true, resizable: true },
+        { field: 'title', headerName: 'Title', sortable: true, filter: true, resizable: true },
         { field: 'SubmissionDate', headerName: 'Submission Date', sortable: true, filter: true, resizable: true },
         { field: 'VendorName', headerName: 'Vendor Name', sortable: true, filter: true, resizable: true },
         { field: 'ClientName', headerName: 'Client Name', sortable: true, filter: true, resizable: true },
@@ -58,12 +60,17 @@ export class DSRReportComponent implements OnInit {
     public startDate: any;
     public endDate: any;
     public traineeId: any;
+    public OrgID: any;
+    public UserRole: any;
     public recruiter: any = [];
 
-    constructor(private http: HttpClient, private service: DashboardService, private reportService: ReportsService) {
+    constructor(private http: HttpClient, private service: DashboardService, private reportService: ReportsService,private cookieService: CookieService,) {
         this.traineeId = sessionStorage.getItem("TraineeID");
-        this.startDate = this.dateFormatter(this.ranges[1].value[0]);
-        this.endDate = this.dateFormatter(this.ranges[1].value[1]);
+        this.OrgID = this.cookieService.get('OrgID');
+        this.UserRole = this.cookieService.get('UserRole');
+        this.startDate = this.dateFormatter(this.ranges[1].value[1]);
+        this.endDate = this.dateFormatter(this.ranges[1].value[0]);
+        console.log(this.ranges);
         sessionStorage.setItem("Route", 'Reports');
     }
 
@@ -73,6 +80,7 @@ export class DSRReportComponent implements OnInit {
             columnDefs: this.columnDefs,
             pagination: true
         }
+        
         this.getInterviews(this.startDate, this.endDate);
         //this.getAllRecruiters();
     }
@@ -85,13 +93,16 @@ export class DSRReportComponent implements OnInit {
     public getInterviews(startDate?: string, endDate?: string) {
         let recruiterId = this.filterForm.get('recruiter')?.value
         let requestItem: any = {
-            /*  organizationID: 9, */
+            OrganizationId: this.OrgID, 
             startDate: startDate,
             endDate: endDate,
             traineeId: this.traineeId,
+            UserRole: this.UserRole,
             //recruiterId: recruiterId != 'All' ? recruiterId : undefined
         }
         this.reportService.getDSRReport(requestItem).subscribe(x => {
+
+            console.log(this.UserRole);
             let response = x.result;
             if (response) {
                 this.rowData = response;
@@ -134,6 +145,7 @@ export class DSRReportComponent implements OnInit {
     public onValueChange(value: any) {
         this.startDate = this.dateFormatter(value[0]);
         this.endDate = this.dateFormatter(value[1]);
+        this.getInterviews(this.startDate, this.endDate);
     }
 
     public dateFormatter(value: any) {
@@ -153,6 +165,100 @@ export class DSRReportComponent implements OnInit {
             this.sizeToFit();
 
         }, 10);
+    }
+
+    public pivotData: any[] = [];
+    public pivotColumnDefs: ColDef[] = [];
+
+    public onExportPivotCSV() {
+        const originalCsvData: string | undefined = this.gridApi.getDataAsCsv();
+
+        if (!originalCsvData) {
+            console.error('Failed to export original CSV data');
+            return;
+        }
+
+        const originalRows = originalCsvData.split('\n');
+        const rowCount = originalRows.length - 1;
+
+        for (let i = 0; i < 3; i++) {
+            originalRows.push('');
+        }
+
+        this.pivotData = this.generatePivotTableData(this.rowData);
+
+        this.pivotColumnDefs = [
+            { field: 'Marketer Name', headerName: 'Marketer Name' },
+            { field: 'count', headerName: 'Number of DSR' },
+        ];
+
+        const pivotCsvData = this.convertPivotDataToCSV(this.pivotData, this.pivotColumnDefs);
+
+        const pivotRows = pivotCsvData.split('\n').filter(row => row.trim() !== '');
+
+        const combinedCsvData = pivotRows.join('\n') + '\n\n\n' + originalRows.join('\n');
+
+        const blob = new Blob([combinedCsvData], { type: 'text/csv;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'DSR_report_pivot.csv';
+        link.click();
+    }
+
+    private generatePivotTableData(data: any[]): any[] {
+        const pivotedData: any[] = [];
+
+        const pivotMap = new Map<string, any>();
+
+        for (const row of data) {
+            console.log(row);
+            const marketerName = row['MarketerName'] || 'N/A';
+
+            const key = `${marketerName}`;
+            if (pivotMap.has(key)) {
+                pivotMap.get(key).count += 1;
+            } else {
+                pivotMap.set(key, {
+                    'Marketer Name': marketerName,
+                    count: 1
+                });
+            }
+        }
+
+        pivotMap.forEach((value) => {
+            pivotedData.push(value);
+        });
+
+        return pivotedData;
+    }
+
+    private convertPivotDataToCSV(data: any[], columnDefs: any[]): string {
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const headerRow = columnDefs.map(colDef => colDef.headerName || colDef.field);
+        XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 'A1' });
+
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || '');
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const address = XLSX.utils.encode_cell({ c: C, r: 0 });
+            if (!worksheet[address]) continue;
+            worksheet[address].s = {
+                fill: { fgColor: { rgb: "FFFFE0" } },
+                font: { bold: true }
+            };
+        }
+
+        const columnWidths = data.reduce((widths, row) => {
+            columnDefs.forEach((colDef, index) => {
+                const value = row[colDef.field] ? row[colDef.field].toString() : '';
+                widths[index] = Math.max(widths[index], value.length);
+            });
+            return widths;
+        }, columnDefs.map(colDef => colDef.headerName.length));
+
+        worksheet['!cols'] = columnWidths.map((w: number) => ({ wch: w + 2 }));
+
+        const csvContent = XLSX.utils.sheet_to_csv(worksheet);
+        return csvContent;
     }
 
 }

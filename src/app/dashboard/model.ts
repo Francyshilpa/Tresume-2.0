@@ -1,4 +1,8 @@
 export interface ResponseDetails {
+    forEach(arg0: (item: any) => void): unknown;
+    interviewlist: any;
+    placementlist: any;
+    submissionlist: any;
     flag?: any;
     result?: any;
 }

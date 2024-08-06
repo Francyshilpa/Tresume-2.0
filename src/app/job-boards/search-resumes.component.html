@@ -1,58 +1,235 @@
 <section class="content">
-    <div class="container-fluid">
-        <accordion [isAnimated]="true">
-            <accordion-group heading="Basic Search" [isOpen]=true>
-                <!-- <div class="row">
-                    <i class="fa fa-arrow-left clickable" (click)="goBack()"> Back to ATS Search</i>
-                </div> -->
-                <div class="row">
-                    <div class="col-md-6" style="padding: 20px;">
-                        <form [formGroup]="form">
-                            <formly-form [model]="model" [fields]="fields" [options]="options" [form]="form">
-                            </formly-form>
-                        </form>
+  <div class="container-fluid">
+    <accordion [isAnimated]="true">
+      <div class="container">
+        <div class="row justify-content-end">
+          <div class="col-md-4">
+            <div class="form-group text-center mt-4">
+              <button type="button" class="btn btn-wdth text-white" (click)="openPopup()" >Add Candidate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <accordion-group heading="Tresume Search" [isOpen]=true>
+        <div *ngIf="isPopupOpen" class="modal" style="display: block;">
+          <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="margin-top: 7rem;
+            margin-left: 8rem;">
+              <div class="modal-header">
+                <h2 class="modal-title">Add Candidate</h2>
+                <button type="button" class="close" aria-label="Close" (click)="closePopup()">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+
+              <div class="modal-body">
+                <div class="form-container">
+                    <form #myForm="ngForm">
+                  <div class="form-row">
+                    <div class="form-group col-md-4">
+                      <label for="firstName">First Name *</label>
+                      <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter first name" required [(ngModel)]="firstName">
+                  </div>
+                  
+                    <div class="form-group col-md-4">
+                      <label for="middleName">Middle Name</label>
+                      <input type="text" class="form-control" id="middleName" name="middleName" placeholder="Enter middle name" [(ngModel)]="middleName">
                     </div>
-                    <div class="col-md-4" style="padding: 20px;">
-                        <label for="recruiter">Location (State, City, Zipcode)</label>
-                        <input [(ngModel)]="selectedState" [typeahead]="states" typeaheadOptionField="name"
-                            [isAnimated]="true" class="form-control">
-                    </div>
-                    <div class="col-md-2" style="padding: 45px;">
-                        <button type="submit" class="btn btn-primary" [disabled]="!form.valid" (click)="onSearch()">
-                            Search
-                        </button>
-                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="lastName">Last Name *</label>
+                      <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter last name" required [(ngModel)]="lastName">
+                  </div>
+                  
+                  <div class="form-group col-md-4">
+                    <label for="phone">Phone</label>
+                    <input type="number" class="form-control" id="phone" name="phone" placeholder="Enter phone no" required [(ngModel)]="phone">
                 </div>
-            </accordion-group>
-            <accordion-group heading="Advanced Filters" [isOpen]="false">
-                <div class="row">
-                  <div class="col-md-2" style="padding: 20px">
-                    <label for="recruiter">Resume Posted Within Days</label>
-                    <input placeholder="Posted within days" [(ngModel)]="daysWithin" class="form-control" />
+                
+                    <div class="form-group col-md-4">
+                      <label for="email">Email</label>
+                      <input type="text" class="form-control" id="email" name="email" placeholder="Enter email" required [(ngModel)]="email">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="jobTitle">Job Title</label>
+                      <input type="text" class="form-control" id="jobTitle" name="jobTitle" placeholder="Enter job title" required [(ngModel)]="jobTitle">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="location">Location</label>
+                        <select class="form-control" name="Location" [(ngModel)]="currentLocation"
+                          [ngModelOptions]="{standalone: true}">
+                          <option value="">Select</option>
+                          <option *ngFor="let location of Locations?.result || []" [value]="location.state">{{ location.state }}
+                          </option>
+                        </select>
+                      </div>  
+                    <div class="form-group col-md-4">
+                      <label for="jobBoardSource">Source</label>
+                      <input type="text" class="form-control" id="jobBoardSource" name="jobBoardSource" placeholder="Enter job board source" required [(ngModel)]="jobBoardSource">
+                    </div>
+
+                    <!-- <div class="form-group col-md-4">
+                      <label for="createdTime">Created Time</label>
+                      <input type="text" class="form-control" id="createdTime" name="createdTime" placeholder="Enter created time" required [(ngModel)]="createdTime">
+                    </div> -->
+                    <!-- <div class="form-group col-md-4">
+                      <label for="lastUpdatedBy">Last Updated By </label>
+                      <input type="text" class="form-control" id="lastUpdatedBy" name="lastUpdatedBy" placeholder="Enter last updatedby" required [(ngModel)]="lastUpdatedBy">
+                    </div> -->
+                    <div class="form-group col-md-4">
+                      <label for="experience">Experience</label>
+                      <input type="text" class="form-control" id="experience" name="experience" placeholder="Enter experience" required [(ngModel)]="experience">
+                    </div>
+                    <div class="form-group col-md-8">
+                      <label for="experience">Skills</label>
+                      <input type="text" class="form-control" id="experience" name="experience" placeholder="Enter experience" required [(ngModel)]="experience">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="uploadFile">Resume Upload *</label>
+                      <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="uploadFile" (change)="handleFileInput($event)" accept=".pdf,.doc,.docx" required>
+                        <label class="custom-file-label" for="uploadFile">Choose file</label>
+                      </div>
+                    </div>
+                    <div class="form-group col-md-4">
+                      <p-checkbox  name="searchType" value="2" [(ngModel)]="securityclearance" inputId="semantic"></p-checkbox >
+                      <label class="labelType" for="semantic">Security Clearance</label>
+                    </div>
+                    
+                    <!-- Add other form fields with ngModel here -->
                   </div>
-                  <div class="col-md-2" style="padding: 20px">
-                    <label for="recruiter">Min Experiance</label>
-                    <input [(ngModel)]="yearsOfExpmin" class="form-control" />
-                  </div>
-                  <div class="col-md-2" style="padding: 20px">
-                    <label for="recruiter">Max Experience</label>
-                    <input [(ngModel)]="yearsOfExp" class="form-control" />
-                  </div>
-                  <div class="col-md-3" style="padding: 20px">
-                    <label for="recruiter">Job Title</label>
-                    <input [(ngModel)]="jobTitle" class="form-control" />
-                  </div>
-        
-                  <div class="col-md-3" style="padding: 5px 20px">
-                    <h4 style="font-weight: bold; font-size: 14px; margin: 8px">
-                      Job board
-                    </h4>
-                    <p-dropdown styleClass="customSelect" [options]="Jobboard" [(ngModel)]="selectedJobboard"
-                      display="chip" optionLabel="name">
-                    </p-dropdown>
-                  </div>
+                </form>
+                <div *ngIf="fileHTML">
+                  <p>HTML Content:</p>
+                  <div [innerHTML]="fileHTML"></div>
                 </div>
-                <!-- <div class="row">
+              </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn" (click)="closePopup()">Cancel</button>
+                <button type="submit" class="btn" (click)="insertdata()" [disabled]="!allFieldsFilled()">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" *ngIf="searchType == 1">
+          <div class="col-md-6" style="padding: 20px;">
+            <form [formGroup]="form">
+              <formly-form [model]="model" [fields]="fields" [options]="options" [form]="form">
+              </formly-form>
+            </form>
+          </div>
+          <div class="col-md-4" style="padding: 20px;">
+            <label for="recruiter">Location (State, City, Zipcode)</label>
+            <input [(ngModel)]="selectedState" [typeahead]="states" typeaheadOptionField="name" [isAnimated]="true"
+              class="form-control">
+          </div>
+          <div class="col-md-2" style="padding: 45px;">
+            <button type="submit" class="btn btn-primary" [disabled]="!form.valid" (click)="onSearch()">
+              Search
+            </button>
+          </div>
+        </div>
+        <div class="row" *ngIf="searchType == 2">
+          <div class="col-md-6" style="padding: 20px;">
+            <form [formGroup]="form">
+              <formly-form [model]="model" [fields]="fields" [options]="options" [form]="form">
+              </formly-form>
+            </form>
+          </div>
+          <div class="col-md-6" style="padding: 20px;">
+            <label for="recruiter">Location (State, City, Zipcode)</label>
+            <input [(ngModel)]="selectedState" [typeahead]="states" typeaheadOptionField="name" [isAnimated]="true"
+              class="form-control">
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <div class="col-md-6">
+                <b>Start Date</b>
+                <input type="date" class="form-control" [(ngModel)]="startdate" [showIcon]="true">
+              </div>
+              <div class="col-md-6">
+                <b>End Date</b>
+                <input type="date" class="form-control" [(ngModel)]="enddate" [showIcon]="true">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label>Recruiter</label>
+            <div class="row">
+              <div class="col-md-6">
+                <p-dropdown styleClass="customSelect" [options]="recruiterList" [(ngModel)]="selectedRecruiter"
+                  display="chip" optionLabel="name">
+                </p-dropdown>
+              </div>
+            </div>
+
+          </div>
+          <div class="col-md-2" style="padding: 45px;">
+            <button type="submit" class="btn btn-primary" (click)="onSearch2()">
+              Search
+            </button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="p-field-radiobutton">
+            <p-radioButton name="searchType" value="1" [(ngModel)]="searchType" inputId="jobDetail"></p-radioButton>
+            <label class="labelType" for="jobDetail">Boolean Search</label>
+          </div>
+          <div class="p-field-radiobutton">
+            <p-radioButton name="searchType" value="2" [(ngModel)]="searchType" inputId="semantic"></p-radioButton>
+            <label class="labelType" for="semantic">Recruiter's Resume Search</label>
+          </div>
+        </div>
+      </accordion-group>
+      <accordion-group heading="Advanced Filters" [isOpen]="false" *ngIf="searchType == 1">
+        <div class="row">
+          <div class="col-md-3" style="padding: 20px">
+            <label for="recruiter">Resume Posted Within Days</label>
+            <input placeholder="Posted within days" [(ngModel)]="daysWithin" class="form-control" />
+          </div>
+          <div class="col-md-3" style="padding: 20px">
+            <label for="recruiter">Min Experience</label>
+            <input [(ngModel)]="yearsOfExpmin" class="form-control" />
+          </div>
+          <div class="col-md-3" style="padding: 20px">
+            <label for="recruiter">Max Experience</label>
+            <input [(ngModel)]="yearsOfExp" class="form-control" />
+          </div>
+          <div class="col-md-3" style="padding: 20px">
+            <label for="recruiter">Job Title</label>
+            <input [(ngModel)]="jobTitle" class="form-control" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3" style="padding: 5px 20px">
+            <h4 style="font-weight: bold; font-size: 14px; margin: 8px">
+              Job board
+            </h4>
+            <p-dropdown styleClass="customSelect" [options]="Jobboard" [(ngModel)]="selectedJobboard" display="chip"
+              optionLabel="name">
+            </p-dropdown>
+          </div>
+
+          <div class="col-md-3" style="padding: 5px 20px">
+            <h4 style="font-weight: bold; font-size: 14px; margin: 8px">
+              Recruiter
+            </h4>
+            <p-dropdown styleClass="customSelect" [options]="recruiterList" [(ngModel)]="selectedRecruiter"
+              display="chip" optionLabel="name">
+            </p-dropdown>
+          </div>
+          <div class="col-md-3" style="padding: 5px 20px">
+            <br>
+            <p-checkbox  name="searchType" value="2" [(ngModel)]="securityclearance" inputId="semantic"></p-checkbox >
+            <label class="labelType" for="semantic">Security Clearance</label>
+          </div>
+          <div class="col-md-3" style="padding: 5px 20px">
+            <br>
+            <p-checkbox  name="searchType" value="2" [(ngModel)]="insidesearch" inputId="semantic"></p-checkbox >
+            <label class="labelType" for="semantic">Search inside Resume</label>
+          </div>
+        </div>
+        <!-- <div class="row">
                   <div class="col-md-3" style="padding: 5px 20px">
                     <h4 style="font-weight: bold; font-size: 14px; margin: 8px">
                       Work Status
@@ -73,15 +250,15 @@
                     </mat-checkbox>
                   </div>
                 </div> -->
-                <div class="row">
-                  <div class="col-md-6" style="padding: 40px 20px; margin-top: 20px; color:red;"
-                    *ngIf="yearsOfExpmin < yearsOfExp">
-                    Max experience should not be smaller than min experience.
-                  </div>
-                </div>
-              </accordion-group>
-        </accordion>
-    </div>
+        <div class="row">
+          <div class="col-md-6" style="padding: 40px 20px; margin-top: 20px; color:red;"
+            *ngIf="yearsOfExpmin < yearsOfExp">
+            Max experience should not be smaller than min experience.
+          </div>
+        </div>
+      </accordion-group>
+    </accordion>
+  </div>
 </section>
 
 <!-- Old Table View -->
@@ -94,100 +271,197 @@
 <!-- New View -->
 
 <div *ngIf="resultsFound" [ngStyle]="loading ? { opacity: '0.2' } : { opacity: '1' }">
-    <div class="align-right total">Total Results: {{ totalResults }}</div>
-    <!--     <div class="align-right">Monthly Quota: {{quota['us monthly']}}</div>
+  <!-- <div class="align-right total">Total Results: {{ totalResults }}</div> -->
+  <!--     <div class="align-right">Monthly Quota: {{quota['us monthly']}}</div>
         <div class="align-right">Daily Quota: {{quota['us daily']}}</div> -->
-    <div *ngFor="let jobDetail of rowData; let i = index" style="padding: 10px">
-        <mat-card class="example-card">
-            <mat-card-title class="border-title">
-                <div class="card-footer-actions">
-                    <div>
-                        {{ jobDetail.FullName }}
-                    </div>
-                    <div>
-                        <p-message *ngIf="jobDetail.Collab" severity="info" text="Profile Migrated"
-                            styleClass="mr-2"></p-message>
-                        <i class="fa fa-eye clickable" *ngIf="jobDetail.showmigrated"
-                            (click)="download(jobDetail.id)"></i>
-                        <i class="fa fa-eye clickable" *ngIf="!showcrediterror" (click)="download(jobDetail)"></i>
-                        
-                        <!-- <button type="submit" class="btn btn-primary" (click)="onSearch()">
+  <div *ngFor="let jobDetail of rowData; let i = index" style="padding: 10px">
+    <mat-card class="example-card">
+      <mat-card-title class="border-title">
+        <div class="card-footer-actions">
+          <div>
+            {{ jobDetail.FullName }}
+          </div>
+          <div>
+
+            <p-message *ngIf="jobDetail.Collab" severity="info" text="Profile Migrated" styleClass="mr-2"></p-message>
+            <i class="fa fa-eye clickable" *ngIf="jobDetail.showmigrated" (click)="download(jobDetail.id)"></i>
+            <i class="fa fa-eye clickable" *ngIf="!showcrediterror" (click)="download(jobDetail)"></i>
+
+            <!-- <button type="submit" class="btn btn-primary" (click)="onSearch()">
                       View Resume
                   </button> -->
-                  &nbsp;
-                  <i class="fa fa-arrow-circle-down clickable"  (click)="migrate(jobDetail.TraineeID)"></i>
-                    </div>
-                </div>
-            </mat-card-title>
-            <mat-card-content style="height: 200px; overflow-y: auto">
-                <div class="container-flex">
-                    <div class="card-body">
-                        <div class="card-job-info" style="width: 50%">
-                            <h2>{{ jobDetail.TraineeTitle }}</h2>
-                            <i class="label fa fa-location-arrow">
-                                {{ jobDetail.CurrentLocation }}
-                            </i>
-                            <i class="label fa fa-building">
-                                {{ jobDetail.Source }}
-                            </i>
-                            <i class="label fa fa-calendar">
-                                {{ jobDetail.LastUpdateTime | date }}
-                            </i>
-                            <i *ngIf="jobDetail.YearsOfExpInMonths" class="label fa fa-briefcase">
-                                Years of Experience: {{ jobDetail.YearsOfExpInMonths/12| number: '1.1-1' }}
-                            </i>
-                        </div>
-                        <!-- <div class="card-job-skills flex align-items-left">
-                            <i class="label fa fa-graduation-cap">Skills</i>
+            &nbsp;
+            <!-- <i class="fa fa-arrow-circle-down clickable" (click)="migrate(jobDetail.TraineeID)"></i> -->
+            <i class="nav-icon fas fa-users" 
+            data-toggle="modal" 
+            data-target="#exampleModal" 
+            title="To Transfer Candidate to HRMS" 
+            (click)="openModals(jobDetail)">
+        </i>&nbsp;
+            <i class="fa fa-arrow-circle-down clickable" data-toggle="modal" data-target=".bd-example-modal" (click)="openModal(jobDetail)"></i>
+          </div>
+        </div>
+      </mat-card-title>
+      <mat-card-content style="height: 200px; overflow-y: auto">
+        <div class="container-flex">
+          <div class="card-body">
+            <div class="card-job-info" style="width: 50%">
+              <h2 [innerHTML]="jobDetail.TraineeTitle| keyhighlight:keyWord"></h2>
+              <!-- <h2>{{ jobDetail.TraineeTitle }}</h2> -->
+              <i class="label fa fa-location-arrow">
+                {{ jobDetail.CurrentLocation }}
+              </i>
+              <i class="label fa fa-building">
+                {{ jobDetail.Source }}
+              </i>
+              <i class="label fa fa-calendar">
+                {{ jobDetail.LastUpdateTime | date }}
+              </i>
+              <i *ngIf="jobDetail.YearsOfExpInMonths" class="label fa fa-briefcase">
+                Years of Experience: {{ jobDetail.YearsOfExpInMonths/12| number: '1.1-1' }}
+              </i>
+              <i *ngIf="jobDetail.YearsOfExpInMonths" class="label fa fa-briefcase">
+                Resume Last Migrated : {{ jobDetail.LastUpdateTime | date : "d MMM y" }}
+              </i>
+              <i class="label fa fa-arrow-circle-down">
+                Downloaded By : {{jobDetail.Recruiter}}
+              </i>
+            </div>
+            <div class="card-job-skills flex align-items-right" style="width: 50%">
+              <!-- <i class="label fa fa-graduation-cap">Skills</i>
                             <div class="card-job-skilllist">
                                 <div *ngFor="let skill of jobDetail.diceSkills; index as i" class=""
                                     style="padding: 5px">
                                     <p-chip label="{{ skill }}"></p-chip>
                                 </div>
-                            </div>
-                        </div> -->
-                    </div>
+                            </div> -->
+              <div class="row">
+                <div class="col-md-12">
+                  <b>Notes :</b>
+                  <div *ngIf="!jobDetail.editMode">
+                    <p (click)="enableEditMode(i)">{{ jobDetail.Notes || 'Add a note'}}</p>
+                  </div>
+                  <div *ngIf="jobDetail.editMode">
+                    <textarea class="form-control" [(ngModel)]="jobDetail.Notes"></textarea>
+                    <button (click)="saveChanges(i)" class="btn btn-primary btn-sm">Save</button>
+                    <button (click)="cancelEdit(i)" class="btn btn-secondary btn-sm">Cancel</button>
+                  </div>
                 </div>
-            </mat-card-content>
-        </mat-card>
-    </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
 </div>
 
 <div *ngIf="resultsFound" class="pagination-footer">
-    <pagination [totalItems]="totalResults" [maxSize]="20" (pageChanged)="pageChanged($event)" [itemsPerPage]="10"
-        [align]="true"></pagination>
+  <pagination [totalItems]="totalResults" [maxSize]="20" (pageChanged)="pageChanged($event)" [itemsPerPage]="10"
+    [align]="true"></pagination>
 </div>
 
 <div bsModal #lgModal="bs-modal" class="modal fade" role="dialog" aria-labelledby="dialog-sizes-name1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 id="dialog-sizes-name1" class="modal-title pull-left">Resume View</h4>
-                <button type="button" class="btn-close close pull-right" (click)="lgModal.hide()" aria-label="Close">
-                </button>
-            </div>
-            <div class="modal-body">
-                <button type="submit" class="btn btn-primary" (click)="downloadAsPdf()">Download</button>
-                <span [innerHTML]="resumeHTMLContent"></span>
-            </div>
-        </div>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="dialog-sizes-name1" class="modal-title pull-left">Resume View</h4>
+        <button type="button" class="btn-close close pull-right" (click)="lgModal.hide()" aria-label="Close">
+        </button>
+      </div>
+      <div class="modal-body">
+        <button type="submit" class="btn btn-primary" (click)="downloadAsPdf()">Download</button>
+        <span [innerHTML]="resumeHTMLContent"></span>
+      </div>
     </div>
+  </div>
 </div>
 
 <p-sidebar #pTemplate [(visible)]="visibleSidebar2" position="right" [baseZIndex]="1000000" [appendTo]='"body"'
-    [style]="{'width':'60rem'}" [blockScroll]="true">
-    <h4 id="dialog-sizes-name1" class="modal-title pull-left">Resume View</h4>
-    <div>
-        <span [innerHTML]="resumeHTMLContent"></span>
-    </div>
-    <div style="display: flex;
+  [style]="{'width':'60rem'}" [blockScroll]="true">
+  <div id="printpdf">
+    <div [innerHTML]="sanitizeHtml(resumeHTMLContent)"></div>
+  </div>
+  <div style="display: flex;
     flex-direction: row;">
-        <div>
-            <button type="submit" class="btn btn-primary" (click)="downloadAsPdf()">Download</button>
-        </div>
+    <div>
+      <button type="submit" class="btn btn-primary" (click)="downloadhtmlPdf()">Download Pdf</button>
+      <button type="submit" class="btn btn-primary" (click)="ExportToDoc('printpdf')">Download Word</button>
     </div>
+  </div>
 </p-sidebar>
 <div *ngIf="loading" class="loader-container">
-    <app-loader class="loader"></app-loader>
+  <app-loader class="loader"></app-loader>
+</div>
+
+<!-- Modal -->
+<div class="modal fade bd-example-modal" tabindex="-1" role="dialog" aria-labelledby="myExtraLargeModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content container2">
+      <div class="modal-header">
+        <h2 class="modal-title" id="exampleModalLongTitle"> Apply Candidate to Job</h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span class="close" aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center">
+        <form>
+          <div class="form-group row">
+            <label for="Selectedjobtitle" class="col-sm-3 col-form-label">Select the Job : </label>
+            <div class="col-sm-9">
+              <select class="form-control" name="Selectedjobtitle" [(ngModel)]="SelectedjobID" [ngModelOptions]="{standalone: true}">
+                <option value="">Select</option>
+                <option *ngFor="let jobs of jobtitles?.result || []" [value]="jobs.JobID">{{ jobs.job_title_clientname }}</option>
+              </select>
+              <br>
+              <div style="text-align: left;">
+                <p style="display: inline-block;margin-right: 15px;"><strong>Candidate Name : &nbsp;&nbsp;</strong> {{ selectedJobDetail?.FullName }}</p>
+                <p style="display: inline-block;"><strong>Source : &nbsp;&nbsp;</strong> {{ selectedJobDetail?.Source }}</p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Closing modal-body div -->
+      <div class="modal-footer">
+        <button type="button" class="btn" data-dismiss="modal">Close</button>
+        <button type="button" class="btn" data-dismiss="modal" (click)="Assigntojob()">Assign</button>
+      </div>
+    </div>
   </div>
-  
+</div>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="exampleModalLabel">Migrate Candidate</h2>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <p style="display: inline-block; margin-right: 15px;"><strong>Candidate Name : &nbsp;&nbsp;</strong> {{ selectedJobDetail?.FullName }}</p>
+          <p>Please ensure that the <b>'Notes for the candidate'</b> field is filled. If there are no notes to add, please enter ( NULL ) in this field.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" (click)="migrate(selectedJobDetail?.TraineeID, selectedJobDetail?.Notes)">Transfer the candidate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div [class.show]="isVisible" class="notification" role="alert">
+  <span>{{ message }}</span>
+</div>
+
+<p-toast position="bottom-right"></p-toast>
+<!-- <ngx-loading [show]="loading" [config]="{ backdropBorderRadius: '3px' }"></ngx-loading> -->

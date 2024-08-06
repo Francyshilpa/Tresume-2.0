@@ -13,6 +13,7 @@ import { Location } from '@angular/common';
 
 })
 export class HarvestComponent implements OnInit {
+  loading: boolean = false;
   public OrgID: any;
   public userName: any;
   public TraineeID: any;
@@ -57,7 +58,7 @@ export class HarvestComponent implements OnInit {
   totalResults: any;
   rowData: any;
   showcrediterror: boolean = false;
-  //division 
+  //division
   creditcount: number = 0;
   usedcount: number = 0;
   clientip: any;
@@ -66,6 +67,20 @@ export class HarvestComponent implements OnInit {
   jobID: any = 3;
   isallowed: any = true;
   divcandidateemail: any = '';
+  currentTabIndex: any;
+  tabIndex: any;
+  dworkstatus: any;
+  dEdudegree: any;
+  drelocate: any;
+  cSkill: any;
+  cYrExp: any;
+  cschool: any;
+  cWrkStat: any;
+  cHighEduDegree: any;
+  crelocate: any;
+  cSecurityClr: any;
+
+
   constructor(
     private cookieService: CookieService,
     private service: HarvestService,
@@ -73,25 +88,65 @@ export class HarvestComponent implements OnInit {
     private router: Router,
     private messageService: MessageService,
     private location: Location
-  ) { }
-
-  ngOnInit(): void {
-    this.OrgID = this.cookieService.get('OrgID');
-    this.userName = this.cookieService.get('userName1');
-    this.TraineeID = this.cookieService.get('TraineeID');
-    // this.OrgID = 82;
-    // this.userName = 'karthik@tresume.us';
-    // this.TraineeID = 36960;
-    this.fetchharvest();
-    this.fetchcredit();
+  ) {
 
   }
 
+  onTabChange(tabIndex: number) {
+    const tabLabels = ['', '', '', '', '', ''];
+    this.currentTabIndex = 0;
+    this.tabIndex = 0;
 
-  public Oncreate() {
+    if (tabIndex >= 0 && tabIndex < tabLabels.length) {
+      this.currentTabIndex = tabIndex;
+      this.tabIndex = tabIndex;
+    }
+
+    this.currentTabIndex = tabIndex;
+    switch (tabIndex) {
+      case 0:
+        break;
+      case 1:
+        break;
+      case 2:
+        break;
+      default:
+        break;
+    }
+  }
+
+
+  ngOnInit(): void {
+    this.loading = true;
+    this.OrgID = this.cookieService.get('OrgID');
+    this.userName = this.cookieService.get('userName1');
+    this.TraineeID = this.cookieService.get('TraineeID');
+    this.fetchharvest();
+    this.fetchcredit();
+  }
+
+  saveData() {
+    // this.loading = true;
+    switch (parseInt(this.currentTabIndex)) {
+      case 0:
+        this.OncreateMonster();
+        break;
+      case 1:
+        this.OncreateDice();
+        break;
+      case 2:
+        this.OncreateCB();
+        break;
+      default:
+        console.error('Invalid tab index');
+    }
+  }
+
+
+  OncreateMonster() {
     let Req = {
       recid: this.TraineeID,
-      jobboardid: 3,        // temp for Monster it should be dynamic when create other jobboards
+      jobboardid: 3,
       keywords: this.mkeywords,
       jobtitle: this.mJobTitle,
       location: this.mLocation,
@@ -104,6 +159,9 @@ export class HarvestComponent implements OnInit {
       job_description: this.mJobdescription,
       recemail: this.userName
     };
+    console.log(Req);
+    this.loading = true;
+
     this.service.addharvest(Req).subscribe((x) => {
       console.log('Inserted');
       for (let i = 0; i < this.mdownlodlimit; i++) {
@@ -112,9 +170,81 @@ export class HarvestComponent implements OnInit {
 
       this.fetchharvest();
       this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Harvest sheduled successfully.' });
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
+      this.loading = false;
+    });
+  }
+
+  OncreateDice() {
+    let Req = {
+      recid: this.TraineeID,
+      jobboardid: 2,
+      keywords: this.dkeywords,
+      jobtitle: this.dJobTitle,
+      location: this.dLocation,
+      radius: this.dRadius,
+      Lastupdated: this.dLastupdated,
+      MinExp:this.dminexp,
+      MaxExp:this.dmaxexp,
+      WorkStat:this.dworkstatus,
+      HighestEdu:this.dEdudegree,
+      Relocate:this.drelocate,
+      status: 1,
+      orgID: this.OrgID,
+      job_description: 1, // for monster only available
+      recemail: this.userName,
+      downloadlimit:this.ddownlodlimit,
+      scheduledtime:this.dshedule
+    };
+    console.log(Req);
+    this.loading = true;
+
+    this.service.addharvest(Req).subscribe((x) => {
+      console.log('Inserted');
+      for (let i = 0; i < this.ddownlodlimit; i++) {
+        this.adddivisionaudit();
+      }
+
+      this.fetchharvest();
+      this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Harvest sheduled successfully.' });
+      this.loading = false;
+    });
+  }
+
+  OncreateCB() {
+    let Req = {
+      recid: this.TraineeID,
+      jobboardid: 4,
+      keywords: this.ckeywords,
+      jobtitle: this.cJobTitle,
+      location: this.cLocation,
+      radius: this.cRadius,
+      Lastupdated: this.cLastupdated,
+      skill:this.cSkill,
+      yearExp:this.cYrExp,
+      school:this.cschool,
+      WorkStatus:this.cWrkStat,
+      HighEduDegree:this.cHighEduDegree,
+      Relocate:this.crelocate,
+      SecurityClearance:this.cSecurityClr,
+      job_description: this.mJobdescription, // for monster only available
+      status: 1,
+      orgID: this.OrgID,
+      recemail: this.userName,
+      downloadlimit:this.cdownlodlimit,
+      scheduledtime:this.cshedule
+    };
+    console.log(Req);
+    this.loading = true;
+
+    this.service.addharvest(Req).subscribe((x) => {
+      console.log('Inserted');
+      for (let i = 0; i < this.mdownlodlimit; i++) {
+        this.adddivisionaudit();
+      }
+
+      this.fetchharvest();
+      this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Harvest sheduled successfully.' });
+      this.loading = false;
     });
   }
 
@@ -125,6 +255,8 @@ export class HarvestComponent implements OnInit {
     console.log(this.OrgID);
     this.service.fetchharvest(Req).subscribe((x: any) => {
       this.harvestlist = x.result;
+      this.loading = false;
+
     });
   }
 
@@ -224,12 +356,12 @@ export class HarvestComponent implements OnInit {
       for (let i = 0; i < downloadlimit; i++) {
         this.deleteAudit(this.userName);
       }
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Your Harvest is deleted' });
+      this.messageService.add({ severity: 'error', summary: 'Notification', detail: 'Your Harvest is deleted' });
     });
     this.fetchharvest();
-    setTimeout(() => {
-      window.location.reload();
-    }, 5000);
+    // setTimeout(() => {
+    //   window.location.reload();
+    // }, 5000);
 
   }
 

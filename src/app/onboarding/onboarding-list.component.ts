@@ -30,6 +30,7 @@ export class OnboardingListComponent implements OnInit {
     public startDate: any;
     public endDate: any;
     public totalCounts: any = {};
+    obinstruction: any;
 
     selectedStatusOptions: any[] = [];
     filterForm = new FormGroup({
@@ -47,10 +48,64 @@ export class OnboardingListComponent implements OnInit {
         label: 'Last 90 Days'
     }];
     traineeId: string | null;
-
+    useremail: string;
+    currentActive = 1;
+    showProgressModal = false;
+    
+    steps = [
+      'Step 1: Personal Information',
+      'Step 2: Contact Information',
+      'Step 3: Employment Details',
+      'Step 4: Review and Submit',
+      'Step 5: Contact Information',
+      'Step 6: Employment Details',
+      'Step 7: Review and Submit',
+      'Step 8: Contact Information',
+    ];
+    
+    images = [
+      'assets/img/onboard/S1.png',
+      'assets/img/onboard/STEP2.png',
+      'assets/img/onboard/ST3.png',
+      'assets/img/onboard/S4.png',
+      'assets/img/onboard/S5.png',
+      'assets/img/onboard/S6.png',
+      'assets/img/onboard/S7.png',
+      'assets/img/onboard/ST8.png',
+    ];
+    
+    get progressHeight() {
+        return ((this.currentActive - 1) / (this.steps.length - 1)) * 100 + '%';
+      }
+    
+    
+      next() {
+        if (this.currentActive < this.steps.length) {
+          this.currentActive++;
+        }
+        // if (this.currentActive > this.steps.length){
+        //     this.showProgressModal = false;
+        // }
+      }
+    
+        finish(){
+            if(this.currentActive == this.steps.length){
+            this.showProgressModal = false;
+            }
+        }
+      prev() {
+        if (this.currentActive > 1) {
+          this.currentActive--;
+        }
+      }
+    
+      skip() {
+        this.showProgressModal = false;
+      }
 
 
     constructor(private service: OnboardingService, private router: Router, private cookieService: CookieService, private dialog: MatDialog) {
+        this.useremail = this.cookieService.get('userName1')
         this.frameworkComponents = {
             'ProgressRenderer': ProgressRenderer,
         }
@@ -61,6 +116,32 @@ export class OnboardingListComponent implements OnInit {
 
     ngOnInit(): void {
         //this.showCcpaPopup();
+        // this.showProgressModal = true;
+        // this.fetchEmployeeList();
+        let req:any={
+            useremail: this.useremail
+        }
+        this.service.getinstructionstatus(req).subscribe(response => {
+            console.log('Full response from service:', response);  // Log the full response
+        
+            // Safely access response.recordsets[0][0].obinstruction with optional chaining
+            const instruction = response?.recordsets?.[0]?.[0]?.obinstruction;
+        
+            if (instruction !== undefined) {
+                this.obinstruction = instruction;
+        
+                if (this.obinstruction === 0) {
+                    this.showProgressModal = true;
+                } else {
+                    this.showProgressModal = false;
+                }
+            } else {
+                console.error('obinstruction is undefined in the response');
+            }
+        }, error => {
+            console.error('Error fetching instruction status:', error);
+        });
+        
         this.OrgID = this.cookieService.get('OrgID') || "9";
         let cellRendererFn = function (params: any): any { return null; };
         this.columnDefs = [
@@ -120,7 +201,7 @@ export class OnboardingListComponent implements OnInit {
 
     public getOnboardList(startDate?: string, endDate?: string) {
         let requestItem: any = {
-            OrgID: this.OrgID || "9",
+            useremail: this.useremail,
             startDate: startDate,
             endDate: endDate
         }
@@ -128,6 +209,7 @@ export class OnboardingListComponent implements OnInit {
             let response = x;
             if (response) {
                 this.rowData = response;
+                this.employees = x.result; 
                 this.sizeToFit();
             }
         });
@@ -196,6 +278,10 @@ export class OnboardingListComponent implements OnInit {
         console.log('params', params.data.ID)
 
     }
+    public navigateToOnboardStep(id: any) {
+        this.router.navigate(['/onboard/step/' + id]);
+    }
+    
 
     public delete(params: any) {
         console.log('params', params)
@@ -227,4 +313,47 @@ export class OnboardingListComponent implements OnInit {
           }
         }); */
     }
+
+    hide() {
+        let req: any = {
+            useremail: this.useremail
+        };
+    
+        this.service.updateinstruction(req).subscribe(
+            (response) => {
+                this.showProgressModal = false;
+            },
+            (error) => {
+                this.showProgressModal = false;
+            }
+        );
+    }
+    
+    
+
+    employees: any[];
+    fetchEmployeeList(){
+        let Req = {
+            useremail: this.useremail,
+        };
+        this.service.getOnboardingList(Req).subscribe((x: any) => {
+          this.employees = x.result;        
+        });
+      }
+
+      getBackgroundColor(completion: number): string {
+        if (completion < 25) {
+            return "#e7602e99"; // light red
+        } else if (completion >= 25 && completion <= 75) {
+            return "#f4963980"; // light orange
+        } else {
+            return "#a4e73466"; // light green
+        }
+    }
+
+    navigateToDetailsPage(employee: any) {
+        if (employee && employee.ID) {
+          this.router.navigate(['/onboard/step/' + employee.ID]); 
+        }
+      }
 }

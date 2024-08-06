@@ -5,7 +5,7 @@ const config = {
     user: 'sa',
     password: 'Tresume@123',
     server: '92.204.128.44',
-    database: 'Tresume_Beta',
+    database: 'Tresume',
     trustServerCertificate: true
 };
 
@@ -13,7 +13,7 @@ const config = {
 //   user: 'sa',
 //   password: 'Tresume@123',
 //   server: '92.204.128.44',
-//   database: 'Tresume_Beta',
+//   database: 'Tresume',
 //   trustServerCertificate: true
 // };
 
@@ -24,7 +24,7 @@ pool.connect((err) => {
       console.error('Error connecting to Tresume database:', err);
       return;
     }
-    console.log('Connected to Tresume_Beta database!');
+    console.log('Connected to Tresume database!');
   });
   
   module.exports = pool;

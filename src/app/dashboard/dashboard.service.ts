@@ -34,8 +34,8 @@ export class DashboardService {
         return this.http.get<ResponseDetails>(this.endpoint + 'adminSubmissionByMarketer/' + item.traineeID + '/' + item.startDate + '/' + item.endDate);
     }
 
-    getTraineeDetails(id: any): Observable<ResponseDetails> {
-        return this.http.get<ResponseDetails>(this.endpoint + 'getTraineeDetails/' + id);
+    getTraineeDetails(req: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getTraineeDetails/' , req);
     }
 
     getLegalStatus(id: any): Observable<ResponseDetails> {
@@ -53,6 +53,37 @@ export class DashboardService {
 
     getAllRecruiters(id: any): Observable<ResponseDetails> {
         return this.http.get<ResponseDetails>(this.endpoint + 'getAllRecruiters/' + id);
+    }
+    
+
+    getperformancereport(request: any): Observable<ResponseDetails> {
+        let requestDetails: any = { fromDate: request.fromDate, toDate: request.toDate, recruiterId: request.recruiterId, orgID: request.orgID };
+        return this.http.post<ResponseDetails>(this.endpoint + 'performancereport', requestDetails);
+    }
+
+    getAdminDashboardData(req: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getAdminDashboardData/' , req);
+    }
+
+    getUserDashboardData(req: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getUserDashboardData/' , req);
+    }
+
+    getSuperAdminDashboardData(req: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getSuperAdminDashboardData/' , req);
+    }
+
+    // getUserJobPostingData(req: any): Observable<ResponseDetails> {
+    //     return this.http.post<ResponseDetails>(this.endpoint + 'getUserJobPostingData' , req);
+    // }
+    // getAdminJobPostingData(req: any): Observable<ResponseDetails> {
+    //     return this.http.post<ResponseDetails>(this.endpoint + 'getAdminJobPostingData' , req);
+    // }
+    // getSuperAdminJobPostingData(req: any): Observable<ResponseDetails> {
+    //     return this.http.post<ResponseDetails>(this.endpoint + 'getSuperAdminJobPostingData' , req);
+    // }
+    getJobPostingData(req: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getJobPostingData' , req);
     }
 }
 

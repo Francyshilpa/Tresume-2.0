@@ -117,7 +117,9 @@ export class ReportsService {
         let requestDetails: any = {
             startDate: request.startDate,
             endDate: request.endDate,
-            traineeId: request.traineeId
+            traineeId: request.traineeId,
+            OrganizationId: request.OrganizationId,
+            UserRole: request.UserRole,
         };
         return this.http.post<ResponseDetails>(this.endpoint + 'getDSRReport', requestDetails);
     }
@@ -140,6 +142,14 @@ export class ReportsService {
     return this.http.post<ResponseDetails>(this.endpoint + 'getSubmittedRatio', requestDetails);
   }
 
+  JobboardUsageReport(request: any): Observable<ResponseDetails> {
+    let requestDetails: any = {
+        startDate: request.startDate,
+        endDate: request.endDate,
+        OrgID: request.OrgID
+    };
+    return this.http.post<ResponseDetails>(this.endpoint + 'JobboardUsageReport', requestDetails);
+}
 
 }
 

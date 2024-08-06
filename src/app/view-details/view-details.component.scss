@@ -1,11 +1,11 @@
 
-  .container{
+  .container-fluid{
     background-color: #fff;
 
   }
   .main{
-    border-top: 3px solid #46103d;
-    border-bottom: 3px solid #46103d;
+    border-top: 3px solid #482668;
+    border-bottom: 3px solid #482668;
   }
   
   .table-container {
@@ -21,7 +21,7 @@
     text-align: center;
   }
   .btn{
-    background-color: #46103d;
+    background-color: #482668;
     color: #fff;
     border: none;
   }
@@ -75,4 +75,51 @@ tbody{
 }
   
   
-  
+.textarea {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  // border-radius: 5px;
+  resize: vertical;
+  font-size: 16px;
+}
+
+.editable-input {
+  width: 100%; /* Adjust width as needed */
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  // border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.readonly-input{
+  width: 80%;
+}
+// .editable-input:focus {
+//   outline: 0;
+//   border-color: #80bdff;
+//   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+// }
+.editable-input {
+  width: 60px;
+}
+
+.date-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.date-label {
+  flex: 0 0 auto;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.date {
+  flex: 0 0 auto;
+}
+

@@ -134,7 +134,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    background-color: rgba(0, 0, 0, 0.5); 
   }
   
   .loader {
@@ -150,4 +150,119 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+  .btn {
+    background-color: #482668 ;
+    color: #fff; 
+  }
+
+  .highlight {
+    background-color: yellow;
+    font-weight: bold;
+  }
   
+  .custom-file-input::before {
+    border-color: #482668; 
+  }
+  
+  .custom-file-label::after {
+    background-color: #482668; 
+  }
+.card-job-info {
+    display: flex;
+    flex-direction: column;
+}
+.custom-file-input::-webkit-file-upload-button {
+    color: transparent; 
+  }
+  
+  .custom-file-label::after {
+    color: white; 
+  }
+  
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.4);
+  }
+  
+//   / Modal content /
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; 
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+  }
+  
+  .btn-wdth{
+    font-size: 15px;
+    margin-left: 14rem;
+    padding: 11px 11px;
+  }
+  .btn-wdth:hover{
+    background-color: #5d0aab !important;
+  }
+  .fa-eye{
+    color: #482668; 
+  }
+  .fa-users{
+    color: #482668; 
+    cursor: pointer;
+  }
+  .fa-arrow-circle-down{
+    color: #482668;
+  }
+
+  .fa-eye:hover{
+    color: #5d0aab
+  }
+  .fa-users:hover{
+    color: #5d0aab
+  }
+  .fa-arrow-circle-down:hover{
+    color: #5d0aab
+  }
+  
+.notification {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background-color: #333; /* Darker background for better contrast */
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Increased shadow for depth */
+  z-index: 10000;
+  transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-30px); /* Slightly larger translate effect */
+}
+
+.notification.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  animation: bounceIn 0.4s ease-out; /* Bounce effect on show */
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: translateY(-1000px);
+  }
+  60% {
+    transform: translateY(30px);
+  }
+  80% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
