@@ -11,13 +11,24 @@ export class AllJobPostingsService {
     // public endpoint = 'http://localhost:3000/';
 
     constructor(private http: HttpClient) { }
-
-    // deleteJobPosting(request: any): Observable<ResponseDetails> {
-    //     return this.http.post<ResponseDetails>(this.endpoint + 'deleteJobPosting', request);
-    // }
-
+    
     getJobPostingList(request: any): Observable<ResponseDetails> {
         return this.http.post<ResponseDetails>(this.endpoint + 'getJobPostingList', request);
+    }
+    
+    fetchassigneeRecruiter(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'fetchassigneeRecruiter', request);
+    }
+    
+    TBassignee(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'TBassignee', request);
+    }
+    deleteJobPost(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'deleteJobPost', request);
+    }
+   
+    JdEmailSent(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'JdEmailSent', request);
     }
 }
 export interface ResponseDetails {

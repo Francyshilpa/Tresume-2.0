@@ -23,6 +23,7 @@ import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import * as FileSaver from 'file-saver';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import * as html2pdf from 'html2pdf.js';
 
 const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
   const byteCharacters = atob(b64Data);
@@ -51,10 +52,22 @@ const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
   styleUrls: ['./search-resumes.component.scss'],
 })
 export class SearchResumesDiceComponent implements OnInit {
+  @ViewChild('pdfdoc') pdfdoc: ElementRef;
+
   form = new FormGroup({});
   form1 = new FormGroup({});
   model: any = {};
   options: FormlyFormOptions = {};
+  selectedEmploymenttype: any; 
+selectedexcludeThirdparty: any;
+selectedFacets: any; 
+selectedEmail: any; 
+selectedPhonenumber: any;
+selectedSwitch: any;
+jobTitlekeyword: string;
+// skillExperience: string;
+likelytoMove: string;
+
   fields: FormlyFieldConfig[] = [
     {
       key: 'keyword',
@@ -141,6 +154,20 @@ export class SearchResumesDiceComponent implements OnInit {
     'West Virginia',
     'Wisconsin',
     'Wyoming',
+    //canada
+    'Ontario',
+    'Alberta',
+    'British Columbia',
+    'Manitoba',
+    'New Brunswick',
+    'Newfoundland and Labrador',
+    'Nova Scotia',
+    'Prince Edward Island',
+    'Quebec',
+    'Saskatchewan',
+    'Northwest Territories',
+    'Nunavut',
+    'Yukon',
   ];
 
   workStatus: any[] = [
@@ -167,11 +194,63 @@ export class SearchResumesDiceComponent implements OnInit {
     { value: 'us citizenship', name: 'US Citizenship' },
     { value: 'green card', name: 'Green Card' },
     { value: 'employment auth document', name: 'Employment Auth Document' },
-    { value: 'have h1', name: "Have h1" },
-    { value: 'need h1', name: "Need h1" },
+    { value: 'have h1', name: 'Have h1' },
+    { value: 'need h1', name: 'Need h1' },
     { value: 'canadian citizen', name: 'Canadian Citizen' },
     { value: 'tn permit holder', name: 'tn permit holder' },
   ];
+  employmentType: any[] = [
+    { value: 'full-time', name: 'full-time' },
+    { value: 'contract to hire - w2', name: 'contract to hire - w2' },
+    { value: 'contract to hire - independent', name: 'contract to hire - independent' },
+    { value: 'contract - independent', name: "contract - independent" },
+    { value: 'part - time', name: "part - time" },
+    { value: 'contract to hire - crop-to-crop', name: 'contract to hire - crop-to-crop' },
+    { value: 'contract-crop-to-crop', name: 'contract-crop-to-crop' },
+    { value: '1099 employee', name: '1099 employee' },
+    { value: 'annouced', name: 'annouced' },
+    { value: 'crop-to-crop', name: "crop-to-crop" },
+    { value: 'eb-1', name: "eb-1" },
+    { value: 'eb-2', name: 'eb-2' },
+    { value: 'eb-3', name: 'eb-3' },
+    { value: 'h-1b', name: 'h-1b' },
+    { value: 'h-4', name: 'h-4' },
+    { value: 'independent', name: 'independent' },
+    { value: 'j-1', name: 'j-1' },
+    { value: 'j-2', name: 'j-2' },
+    { value: 'tax term', name: 'tax term' },
+    { value: 'w-2', name: 'w-2' },
+    { value: 'w-2/1099', name: 'w-2/1099' },
+
+  ];
+
+  excludeThirdparty: any[] = [
+    { value: 'true', name: 'true' },
+    { value: 'false', name: 'false' },
+  ];
+
+  hasEmail: any[] = [
+    { value: 'true', name: 'true' },
+    { value: 'false', name: 'false' },
+  ];
+  hasPhoneNumber: any[] = [
+    { value: 'true', name: 'true' },
+    { value: 'false', name: 'false' },
+  ];
+  likelytoSwitch: any[] = [
+    { value: 'true', name: 'true' },
+    { value: 'false', name: 'false' },
+  ];
+  facets: any[] = [
+    { value: 'company', name: 'company' },
+    { value: 'skills', name: 'skills' },
+    { value: 'jobTitle', name: 'jobTitle' },
+    { value: 'employmentType', name: 'employmentType' },
+    { value: 'educationDegree', name: 'educationDegree' },
+    { value: 'workPermit', name: 'workPermit' },  { value: 'false', name: 'false' },
+
+  ];
+
 
   rowData: any;
   columnDefs: any;
@@ -202,15 +281,16 @@ export class SearchResumesDiceComponent implements OnInit {
   application: any;
   isPDFSrc: boolean = false;
   objUrl: SafeHtml;
+  Htmlresumetopdf: string;
   componentInitialized: boolean;
   currentResumeResp: any;
   migratedProfiles: any[] = [];
   migratedResumeID: any;
 
   selectedWorkPermit: any[] = [];
-  onlyWithSecurityClearance:boolean;
-
-
+  onlyWithSecurityClearance: boolean = false;
+  workPermitDocuments: any;
+  isscocialprofiles: boolean;
   @ViewChild('lgModal', { static: false }) lgModal?: ModalDirective;
   @ViewChild('pdfTable', { static: false }) pdfTable: ElementRef;
   accessToken: any;
@@ -228,10 +308,23 @@ export class SearchResumesDiceComponent implements OnInit {
   jobID1: any = 2;
   isallowed: any = true;
   divcandidateemail: any = '';
-  availablecredits:any = 0;
+  availablecredits: any = 0;
+  dailycredits: any;
   showcrediterror: boolean = false;
   jobTitle: string = '';
 
+  cfullname: string = '';
+  clocation: string = '';
+  cphone: string = '';
+  cworkpermit: string = '';
+  cyearsofExperience: string = '';
+  cjobtitle: string = '';
+  csocialsource: any[] = [];
+  cskill: any[] = [];
+  cemail: string = '';
+  ccurrentExperience: any[] = [];
+  coldExperience: any[] = [];
+  ceducation: any[] = [];
   constructor(
     private route: ActivatedRoute,
     private service: JobBoardsService,
@@ -239,7 +332,7 @@ export class SearchResumesDiceComponent implements OnInit {
     private messageService: MessageService,
     private sanitizer: DomSanitizer
   ) {
-    this.traineeId = sessionStorage.getItem('TraineeID');
+    this.traineeId = this.cookieService.get('TraineeID');
   }
 
   ngOnInit(): void {
@@ -247,7 +340,8 @@ export class SearchResumesDiceComponent implements OnInit {
     this.OrgID1 = this.cookieService.get('OrgID');
     this.userName1 = this.cookieService.get('userName1');
     this.TraineeID1 = this.cookieService.get('TraineeID');
-
+    var days = this.getPendingDays()
+    console.log(days-8);
     // this.OrgID1 = 9;
     // this.userName1 = 'karthik@tresume.us';
     // this.TraineeID1 = 36960;
@@ -256,7 +350,7 @@ export class SearchResumesDiceComponent implements OnInit {
 
     this.initGrid();
     let request = '';
-    this.service.getDiceAuthToken(request).subscribe((x: any) => {
+    this.service.getDiceToken().subscribe((x: any) => {
       if (x) {
         this.accessToken = x.access_token;
       }
@@ -439,8 +533,24 @@ export class SearchResumesDiceComponent implements OnInit {
   //   }
   // }
 
+  public downloadhtmlPdf(){
+    setTimeout(() => {
+      const options = {
+        margin: [5, 5, 5, 5], // Optional margin settings
+        filename: this.cfullname+'.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf()
+        .from(document.getElementById('printpdf')!)
+        .set(options)
+        .save();
+    });
+  }
+
   private download(params: any) {
-    
     if (!this.showcrediterror) {
       this.loading = true;
       let Req = {
@@ -448,46 +558,102 @@ export class SearchResumesDiceComponent implements OnInit {
       };
 
       this.service.checkmd5resume(Req).subscribe((y: any) => {
+        let inputString;
+        if(this.searchType ==1){
+          inputString = this.model.boolean || '';
+        }else{
+          inputString = this.model.keyword || '';
+        }
+        console.log(this.model.boolean);
+        var keywords: any[] = [];
+        if (inputString.trim() !== '') {
+          keywords = inputString.match(/"[^"]+"|\S+/g);
+          if (keywords !== null) {
+            keywords = keywords
+              .map((keyword: string) => keyword.replace(/(^"|"$|\(|\))/g, ''))
+              .filter(
+                (keyword: string) =>
+                  !['and', 'or', 'not'].includes(keyword.toLowerCase())
+              );
+            keywords = keywords.filter((keyword) => keyword !== '');
+            keywords = keywords.map((keyword) => keyword.replace(/^"|"$/g, ''));
+          } else {
+            keywords = [];
+          }
+        }
+
+        console.log(keywords);
         if (y.length > 0) {
           this.isPDFSrc = false;
-          this.objUrl = this.sanitizer.bypassSecurityTrustHtml(y[0].HtmlResume);
+          this.objUrl = this.highlightSkills(y[0].HtmlResume, keywords);
+          this.Htmlresumetopdf = y[0].HtmlResume;
           this.loading = false;
           this.fileReady = true;
           this.visibleSidebar2 = true;
+          this.cfullname = y[0].FirstName ?? null + ' ' + y[0].LastName ?? null;
+          this.clocation = y[0].CurrentLocation ?? null;
+          this.cyearsofExperience =
+            (y[0].YearsOfExpInMonths / 12).toString() ?? null;
+          this.cemail = y[0].UserName ?? null;
+          this.cphone = y[0].PhoneNumber ?? null;
+          this.cjobtitle = y[0].Title ?? null;
+          const skillsString = y[0].Skill;
+          const skillsArray = skillsString.split(',');
+          const skillsJSON = skillsArray.map((skill: any) => ({ skill }));
+          const skillsObject: any = skillsJSON;
+          console.log(skillsObject);
+          this.cskill = skillsObject;
+          this.migratedResumeID = y[0].UserName ?? null;
         } else {
           this.adddivisionaudit();
           this.service
             .getDiceProfileView(params, this.accessToken)
             .subscribe((x: any) => {
+              let profileDetails = x;
               this.loading = false;
+              this.cfullname = profileDetails?.fullName;
+              this.clocation = profileDetails?.region;
+              this.cphone = profileDetails?.phone?.[0] ?? null;
+              this.cemail = profileDetails?.email?.[0] ?? null;
+              this.cworkpermit =
+                profileDetails?.workPermitDocuments?.[0] ?? null;
+              this.cyearsofExperience = profileDetails?.yearsOfExperience;
+              this.cjobtitle = profileDetails?.desiredJobTitles?.[0] ?? null;
+              this.csocialsource = profileDetails?.socialProfiles;
+              this.ceducation = profileDetails?.education;
+              this.cskill = profileDetails?.skills;
+              console.log(this.cskill);
+              let emailID = profileDetails.email[0];
+              this.divcandidateemail = profileDetails.email[0];
+              let firstName = profileDetails.firstName;
+              let lastName = profileDetails.lastName;
+              let title = profileDetails?.desiredJobTitles[0];
+              let CurrentLocation = profileDetails?.region;
+              let YearsOfExpInMonths = (
+                profileDetails.yearsOfExperience * 12
+              ).toString();
+              let skilllist: any = profileDetails.skills;
+              let skills: any = [];
+              skilllist.forEach((itm: any) => {
+                skills.push(itm.skill);
+              });
+              this.visibleSidebar2 = true;
               if (x.resume) {
-                let profileDetails = x;
-                let emailID = profileDetails.email[0];
-                this.divcandidateemail = profileDetails.email[0];
-                let firstName = profileDetails.firstName;
-                let lastName = profileDetails.lastName;
-                let title = profileDetails?.desiredJobTitles[0];
-                let CurrentLocation = profileDetails?.region;
-                let YearsOfExpInMonths = (
-                  profileDetails.yearsOfExperience * 12
-                ).toString();
-                let skilllist: any = profileDetails.skills;
-                let skills: any = [];
-                skilllist.forEach((itm: any) => {
-                  skills.push(itm.skill);
-                });
                 let HtmlResume = profileDetails.resume?.resumeHtml;
                 let source = 'Dice';
                 let ATSID = profileDetails.legacyIds[0];
                 this.migratedResumeID = emailID;
                 this.currentResumeResp = x.resume;
                 let b64Data: any = x.resume.resumeData;
+                console.log(b64Data);
                 let contentType = x.resume.contentType;
                 const blob = b64toBlob(b64Data, contentType);
-                this.isPDFSrc =
-                  contentType === 'application/pdf' ? true : false;
+                // this.isPDFSrc = contentType === 'application/pdf' ? true : false;
                 this.fileReady = true;
-                this.visibleSidebar2 = true;
+
+                // this.objUrl = this.sanitizer.bypassSecurityTrustHtml(HtmlResume);
+                this.objUrl = this.highlightSkills(HtmlResume, keywords);
+                this.Htmlresumetopdf = HtmlResume;
                 let createRequest: DiceProfileRequestItem = {
                   emailID: emailID,
                   firstName: firstName,
@@ -500,6 +666,7 @@ export class SearchResumesDiceComponent implements OnInit {
                   source: source,
                   ATSID: ATSID,
                   traineeId: this.traineeId,
+                  securityclearance:this.onlyWithSecurityClearance ? '1' : '0'
                 };
                 this.service
                   .createJobSeekerProfile(createRequest)
@@ -529,15 +696,29 @@ export class SearchResumesDiceComponent implements OnInit {
       });
     }
   }
+
   public downloadDoc() {
     let req = {
       userName: this.migratedResumeID,
     };
     this.service.getResumePath(req).subscribe((x: any) => {
-      FileSaver.saveAs(
-        'https://tresume.us/' + x[0].ResumePath,
-        x[0].ResumeName
-      );
+      if (x[0] && x[0].ResumePath) {
+        FileSaver.saveAs(
+          'https://tresume.us/' + x[0].ResumePath,
+          x[0].ResumeName
+        );
+      } else {
+        const pdfdoc = this.pdfdoc.nativeElement;
+        const pdfOptions = {
+          margin: 10,
+          filename: 'Resume.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        html2pdf().from(pdfdoc).set(pdfOptions).save();
+      }
     });
   }
 
@@ -577,100 +758,192 @@ export class SearchResumesDiceComponent implements OnInit {
   }
 
   public onSearch() {
-    let req =
-      'q=' +
-      encodeURIComponent(this.model.boolean) +
-      '&page=' +
-      (this.searchRequestItem?.page || 1);
-    if (this.selectedState) {
-      /* const selectedState = "value"+"'"'":" + this.selectedState"" */
-      let locations = '[{"value":"' + this.selectedState + '"}]';
-      if (this.searchRequestItem.locationRadius) {
-        locations =
-          '[{"value":"' +
-          this.selectedState +
-          '","distance":' +
-          this.searchRequestItem.locationRadius +
-          ',"distanceUnit":"miles"}]';
-        console.log('locations', `${locations}`);
+    if (this.searchType == 1) {
+      let req =
+        'q=' +
+        encodeURIComponent(this.model.boolean) +
+        '&page=' +
+        (this.searchRequestItem?.page || 1);
+      if (this.selectedState) {
+        /* const selectedState = "value"+"'"'":" + this.selectedState"" */
+        let locations = '[{"value":"' + this.selectedState + '"}]';
+        if (this.searchRequestItem.locationRadius) {
+          locations =
+            '[{"value":"' +
+            this.selectedState +
+            '","distance":' +
+            this.searchRequestItem.locationRadius +
+            ',"distanceUnit":"miles"}]';
+          console.log('locations', `${locations}`);
+        }
+        req += '&locations=' + encodeURIComponent(locations);
       }
-      req += '&locations=' + encodeURIComponent(locations);
-    }
-    req += this.daysWithin ? '&dateResumeLastUpdated=' + this.daysWithin : '';
-    req += this.selectedEducationDegree
-      ? '&educationDegree=' + this.selectedEducationDegree.value
-      : '';
-    req += this.willingToRelocate
-      ? '&willingToRelocate=' + this.willingToRelocate
-      : '';
-    req += this.onlyWithSecurityClearance
-    ? '&onlyWithSecurityClearance=' + this.onlyWithSecurityClearance
-    : '';
-    req += this.jobTitle ? '&jobTitle=' + this.jobTitle : '';
-    if (this.yearsOfExp && this.yearsOfExpmin) {
-      let exp =
-        '{"min":' + this.yearsOfExpmin + ',"max":' + this.yearsOfExp + '}';
-      req += '&yearsExperience=' + encodeURIComponent(exp);
-    } else if (this.yearsOfExpmin) {
-      let exp = '{"min":' + this.yearsOfExpmin + '}';
-      req += '&yearsExperience=' + encodeURIComponent(exp);
-    } else if (this.yearsOfExp) {
-      let exp = '{"max":' + this.yearsOfExp + '}';
-      req += '&yearsExperience=' + encodeURIComponent(exp);
-    }
+      if (this.isscocialprofiles) {
+        req += this.daysWithin ? '&dateResumeLastUpdated=' + this.daysWithin : '';
+      } else {
+        req += this.daysWithin
+          ? '&dateResumeLastUpdated=' + this.daysWithin
+          : '&dateResumeLastUpdated=999';
+      }
+      console.log(this.selectedEmploymenttype)
+      req += this.selectedEmploymenttype ? '&employmentType=' + this.selectedEmploymenttype.value: '';
+      req += this.selectedexcludeThirdparty ? '&excludeThirdparty=' + (this.selectedexcludeThirdparty.value) : '';
+      req += this.selectedFacets ? '&facets=' + (this.selectedFacets.value) : '';
+      req += this.selectedEmail ? '&hasEmail=' + (this.selectedEmail.value) : '';
+      req += this.selectedPhonenumber ? '&hasPhoneNumber=' + (this.selectedPhonenumber.value) : '';
+      req += this.selectedSwitch ? '&likelyToSwitch=' + (this.selectedSwitch.value) : '';
+      req += this.jobTitlekeyword ? '&jobTitleKeyword=' + (this.jobTitlekeyword) : '';
+      // req += this.skillExperience ? '&skillExperience=' + encodeURIComponent(this.skillExperience) : '';
+      req += this.likelytoMove ? '&likelyToMove=' + (this.likelytoMove) : '';
 
-    console.log(req);
-    this.loading = true;
-    if (this.searchRequestItem.page == undefined) {
-      let auditReq = {
-        jobBoard: 'Dice',
-        query: this.model.boolean,
-        dateTime: new Date(),
-        userName: this.cookieValue,
-      };
-      this.service.jobBoardAudit(auditReq).subscribe((x) => {});
-    }
+      req += this.selectedEducationDegree
+        ? '&educationDegree=' + this.selectedEducationDegree.value
+        : '';
+      req += this.willingToRelocate
+        ? '&willingToRelocate=' + this.willingToRelocate
+        : '';
+      req += this.onlyWithSecurityClearance
+        ? '&onlyWithSecurityClearance=' + this.onlyWithSecurityClearance
+        : '';
+      req += this.jobTitle ? '&jobTitle=' + this.jobTitle : '';
+      const workarray = this.selectedWorkstatus.map((item) => item.value);
+      const workPermit = workarray.join(', ');
+      req += workPermit ? '&workPermit=' + workPermit : '';
+      if (this.yearsOfExp && this.yearsOfExpmin) {
+        let exp =
+          '{"min":' + this.yearsOfExpmin + ',"max":' + this.yearsOfExp + '}';
+        req += '&yearsExperience=' + encodeURIComponent(exp);
+      } else if (this.yearsOfExpmin) {
+        let exp = '{"min":' + this.yearsOfExpmin + '}';
+        req += '&yearsExperience=' + encodeURIComponent(exp);
+      } else if (this.yearsOfExp) {
+        let exp = '{"max":' + this.yearsOfExp + '}';
+        req += '&yearsExperience=' + encodeURIComponent(exp);
+      }
+      console.log(req);
+      this.loading = true;
+      if (this.searchRequestItem.page == undefined) {
+        let auditReq = {
+          jobBoard: 'Dice',
+          query: this.model.boolean,
+          dateTime: new Date(),
+          userName: this.cookieValue,
+        };
+        this.service.jobBoardAudit(auditReq).subscribe((x) => { });
+      }
 
-    this.service.getDiceSearch(req, this.accessToken).subscribe((x: any) => {
-      console.log('x', x);
-      this.loading = false;
-      this.resultsFound = false;
-      let response = x;
-      this.rowData = response.data;
+      this.service.getDiceSearch(req, this.accessToken).subscribe((x: any) => {
+        console.log('x', x);
+        this.loading = false;
+        this.resultsFound = false;
+        let response = x;
+        this.rowData = response.data;
 
-      this.resultsFound = true;
-      this.totalResults = response.meta.totalCount;
-      this.rowData.map((items: any) => {
-        items.migrated = this.migratedProfiles.find(
-          (x) => x.ATSID == items.legacyIds[0]
-        )
-          ? true
-          : false;
-        if (this.showcrediterror == true) {
-          items.showmigrated = this.migratedProfiles.find(
-            (x) => x.ATSID == items.EdgeID
+        this.resultsFound = true;
+        this.totalResults = response.meta.totalCount;
+        this.rowData.map((items: any) => {
+          items.migrated = this.migratedProfiles.find(
+            (x) => x.ATSID == items.legacyIds[0]
           )
             ? true
             : false;
-        }
-        let item: any = items;
-        items.diceSkills = [];
-        for (let i = 0; i < 5; i++) {
-          items.diceSkills.push(item.skills[i] ? item.skills[i].skill : '');
-        }
-        /* item.skills.forEach((itm: any, i) => {
-                    items.diceSkills.push(itm.skill);
-                }); */
-      });
+          if (this.showcrediterror == true) {
+            items.showmigrated = this.migratedProfiles.find(
+              (x) => x.ATSID == items.EdgeID
+            )
+              ? true
+              : false;
+          }
+          let item: any = items;
+          items.diceSkills = [];
+          for (let i = 0; i < 5; i++) {
+            items.diceSkills.push(item.skills[i] ? item.skills[i].skill : '');
+          }
+          /* item.skills.forEach((itm: any, i) => {
+                      items.diceSkills.push(itm.skill);
+                  }); */
+        });
 
-      console.log('this.rowData', this.rowData);
-    });
+        console.log('this.rowData', this.rowData);
+
+      });
+    } else {
+      const request = {
+        searchParameters: {
+          input: this.model.jobDesc, // Use the keyword from the form
+          jobTitleKeyword: this.model.keyword, // Use the job description from the form
+          locations: [{ value: this.selectedState }], // Use the selected state for location
+          page: this.searchRequestItem.page || 1, // Use the page from the search request item or default to 1
+          dateResumeLastUpdated: this.isscocialprofiles ? this.daysWithin : 999, // Use the days within for dateResumeLastUpdated or default to 999
+          educationDegree: this.selectedEducationDegree?.value, // Use the selected education degree value
+          willingToRelocate: this.willingToRelocate,
+          onlyWithSecurityClearance: this.onlyWithSecurityClearance,
+          jobTitle: this.jobTitle,
+          workPermit: this.selectedWorkstatus.map(item => item.value).join(', '), // Use the selected work status values joined by comma
+          // yearsExperience: this.constructYearsExperience(), // Construct years of experience object
+          employmentType: this.selectedEmploymenttype?.value,
+          excludeThirdparty: this.selectedexcludeThirdparty?.value || true,
+          facets: this.selectedFacets?.value,
+          hasEmail: this.selectedEmail?.value,
+          hasPhoneNumber: this.selectedPhonenumber?.value,
+          likelyToSwitch: this.selectedSwitch?.value,
+          jobTitlekeyboard: this.jobTitlekeyword,
+          // skillExperience: this.skillExperience,
+          likelyToMove: this.likelytoMove
+
+        }
+      };
+
+      console.log('Request:', request);
+
+      if (this.model.jobDesc.length < 150) {
+        alert("Job description should be 150 characters or above.");
+      } else {
+        this.loading = true;
+        this.service.getDiceIntelliSearch(request, this.accessToken).subscribe(
+          (response: any) => {
+            console.log('Response:', response);
+            this.loading = false;
+            this.resultsFound = false;
+            this.rowData = response.data;
+            this.resultsFound = true;
+            this.totalResults = response.meta.totalCount;
+            this.rowData.forEach((item: { migrated: boolean; legacyIds: any[]; showmigrated: boolean; EdgeID: any; diceSkills: any; skills: any[]; }) => {
+              item.migrated = this.migratedProfiles.find(x => x.ATSID == item.legacyIds[0]) ? true : false;
+              if (this.showcrediterror == true) {
+                item.showmigrated = this.migratedProfiles.find(x => x.ATSID == item.EdgeID) ? true : false;
+              }
+              item.diceSkills = item.skills ? item.skills.map((skill: { skill: any; }) => skill.skill) : [];
+            });
+          },
+          error => {
+            console.error('Error:', error);
+            this.loading = false;
+          }
+        );
+
+      }
+
+
+    }
+
   }
 
+  private constructYearsExperience(): string {
+    if (this.yearsOfExp && this.yearsOfExpmin) {
+      return `{"min": ${this.yearsOfExpmin}, "max": ${this.yearsOfExp}}`;
+    } else if (this.yearsOfExpmin) {
+      return `{"min": ${this.yearsOfExpmin}}`;
+    } else if (this.yearsOfExp) {
+      return `{"max": ${this.yearsOfExp}}`;
+    } else {
+      return '';
+    }
+  }
   public nocredits() {
     this.messageService.add({
       severity: 'warning',
-      summary: 'Error',
+      summary: 'Notification',
       detail: 'You dont have enough credit to View Resume',
     });
   }
@@ -745,6 +1018,17 @@ export class SearchResumesDiceComponent implements OnInit {
     } else {
       console.log('Error unbind pdf viewer');
     }
+    this.cfullname = '';
+    this.cjobtitle = '';
+    this.cyearsofExperience = '';
+    this.cemail = '';
+    this.cphone = '';
+    this.clocation = '';
+    this.ceducation = [];
+    this.cworkpermit = '';
+    this.csocialsource = [];
+    this.cskill = [];
+    this.objUrl = '';
   }
 
   //Division
@@ -815,13 +1099,13 @@ export class SearchResumesDiceComponent implements OnInit {
                 this.showcrediterror = true;
                 this.messageService.add({
                   severity: 'warning',
-                  summary: 'Error',
+                  summary: 'Notification',
                   detail: 'You dont have enough credit to View Resume',
                 });
                 reject('No division credit found');
                 this.messageService.add({
                   severity: 'warning',
-                  summary: 'Error',
+                  summary: 'Notification',
                   detail: 'No division credit found',
                 });
               } else {
@@ -856,6 +1140,9 @@ export class SearchResumesDiceComponent implements OnInit {
               this.usedcount1 = x.result[0].row_count;
               var count = this.creditcount1 - this.usedcount1;
               this.availablecredits = count;
+              console.log("availablecredits",this.availablecredits)
+              this.dailycredits =Math.round(this.availablecredits/30)
+              console.log("dailycredits",this.dailycredits)
               var percentage = (this.usedcount1 / this.creditcount1) * 100;
               let Req3 = {
                 type: type,
@@ -867,7 +1154,7 @@ export class SearchResumesDiceComponent implements OnInit {
               if (percentage >= 80) {
                 this.messageService.add({
                   severity: 'warning',
-                  summary: 'Error',
+                  summary: 'Notification',
                   detail:
                     'Your Credit reached 80% contact sales to increase your credit',
                 });
@@ -886,7 +1173,7 @@ export class SearchResumesDiceComponent implements OnInit {
                 this.showcrediterror = true;
                 this.messageService.add({
                   severity: 'warning',
-                  summary: 'Error',
+                  summary: 'Notification',
                   detail: 'You dont have enough credit to View Resume',
                 });
               }
@@ -932,6 +1219,87 @@ export class SearchResumesDiceComponent implements OnInit {
     });
     this.fetchcredit();
   }
+
+  highlightSkills(htmlContent: string, skills: string[]): string {
+    skills.forEach((skill) => {
+      // Constructing regex pattern to match all variations of the skill
+      var htmltagslist = [
+        'data',
+        'big',
+        'center',
+        'embed',
+        'form',
+        'meta',
+        'input',
+        'select',
+        'menu',
+        'style',
+        'strike',
+        'border',
+        'disc',
+        'type',
+        'circle',
+      ];
+      if (!htmltagslist.includes(skill.toLowerCase())) {
+        const regex = new RegExp(
+          `\\b${skill
+            .split('')
+            .map((c) => `[${c}${c.toUpperCase()}]`)
+            .join('')}+\\b`,
+          'g'
+        );
+        console.log(regex);
+        htmlContent = htmlContent.replace(
+          regex,
+          `<span style="background-color: yellow;font-weight: bold;">$&</span>`
+        );
+      }
+    });
+    return htmlContent;
+  }
+
+  sanitizeHtml(htmlContent: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(htmlContent);
+  }
+
+  ExportToDoc() {
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title></head><body>";
+  
+    const footer = "</body></html>";
+  
+    const html = header + ' ' + document.getElementById('printpdf')!.innerHTML+' ' + footer;
+  
+    console.log(html);
+    const blob = new Blob(['\ufeff', html], {
+      type: 'application/msword'
+    });
+  
+    const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+  
+    var filename = this.cfullname  ? this.cfullname  + '.doc' : 'document.doc';
+  
+    if ((navigator as any).msSaveOrOpenBlob) {
+      // For Internet Explorer
+      (navigator as any).msSaveOrOpenBlob(blob, filename);
+    } else {
+      // For other browsers
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = filename;
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+  }
+
+  getPendingDays(): number {
+    const today = new Date();
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const diffTime = endOfMonth.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
 }
 
 export interface CBSearchRequestItem {
@@ -948,7 +1316,7 @@ export interface CBSearchRequestItem {
 
 export enum SearchType {
   jobDetail = 1,
-  semantic,
+  boolean,
 }
 
 export interface DiceProfileRequestItem {
@@ -963,4 +1331,5 @@ export interface DiceProfileRequestItem {
   source?: string;
   ATSID?: string;
   traineeId?: string | null;
+  securityclearance?: string|null
 }

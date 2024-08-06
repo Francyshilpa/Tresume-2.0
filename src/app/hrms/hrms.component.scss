@@ -1,8 +1,10 @@
+$brand-primary:#482668;
+
 .bg-clr {
-    background-color: #46103d ; 
+    background-color: #482668 ; 
   }
  
-.container{
+.container-fluid{
   background-color: #fff;
 }
   table {
@@ -10,7 +12,9 @@
     border-collapse: collapse;
     margin-bottom: 20px;
   }
-  
+  .label-large {
+    font-size: 18px;
+}
   th, td {
     border: 1px solid #ccc;
     padding: 10px;
@@ -32,19 +36,20 @@
   
   i{
     margin-left: 2px;
-    color: #94618e;
+    color: #482668;
     cursor: pointer;
   }
  
   td{
-    color: #94618e;
+    color: #482668;
   }
+  
   i:hover {
-    color:#46103d;
+    color:#482668;
   }
 
   .btn-wdth {
-    background-color: #46103d ; 
+    background-color: #482668 ; 
     text-align: center;
 
   }
@@ -59,12 +64,12 @@
   max-width: 600px;
 }
 .main {
-  border-top: 3px solid #46103d;
-  border-bottom: 3px solid #46103d;
+  border-top: 3px solid #482668;
+  border-bottom: 3px solid #482668;
 }
 
  .fa-eye{
-  color: #46103d;
+  color: #482668;
  }
 
  label {
@@ -82,14 +87,14 @@ label{
   margin-left: 5px;
 }
 .btn{
-  background-color: #49274A;
+  background-color: $brand-primary;
   color: #ffffff;
 }
 button{
 border: none;
 }
 .btn:hover{
-  background-color: #94618E;
+  background-color: #5d0aab;
   color: #ffffff;
 }
 .row2{
@@ -101,7 +106,7 @@ border: none;
   margin-bottom: 0;
 }
 form {
-  padding: 20px;
+  padding: 10px;
 }
 .container2{
   background-color: #f2f2f2;
@@ -123,7 +128,149 @@ textarea {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
+.invalid-input {
+  border: 1px solid red;
+}
 
 
+.form-control1 {
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.bn34 {
+  background: none;
+  cursor: pointer;
+  text-decoration: inherit;
+  font-size: 1rem;
+  color: #482668;
+  border-image-slice: 1;
+  font-weight: 600;
+}
+
+// Add interview btn 
+.bn59 {
+  background-color: white; 
+  border: 1px solid #482668; 
+  color: #482668; 
+  font-weight: 600;
+  position: relative;
+  outline: none;
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  height: 45px;
+  width: 130px;
+  opacity: 1;
+  text-decoration: none;
+}
 
 
+.bn59 .bi {
+  font-size: 1.2rem;
+  margin-right: 5px; 
+}
+
+.span{
+  font-size: smaller;
+  margin-top: -6px;
+  margin-bottom: -6px;
+  margin-left: auto;
+  margin-right: 20px;
+}
+
+.row {
+  display: flex;
+}
+
+.left-column {
+  flex: 1;
+  padding-right: 10px;
+}
+
+.column {
+  flex: 1;
+  padding-left: 10px; 
+}
+
+.button-10 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  border-radius: 6px;
+  border: none;
+  width: 150px;
+  height: 30px;
+  color: #fff;
+  background: linear-gradient(180deg, #482668 0%, #482668 100%);
+   background-origin: border-box;
+  box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.button-10:focus {
+  box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
+  outline: 0;
+}
+.pagination-container {
+  margin-top: 20px;
+  text-align: center;
+}
+.pagination-button {
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 16px;
+  color: #fff;
+  background-color:#482668;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination-button:hover {
+  background-color:#5d0aab;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn:disabled {
+  background-color: #e0e0e0; 
+  color: #a8a8a8;
+  cursor: not-allowed; 
+}
+.modal-content {
+  margin: auto; 
+}
+.modal-body {
+  padding: 1rem;
+  line-height: 1.3;
+  font-size: 18px;
+  font-family: ui-monospace;
+}
+.skills-label, .skills-text {
+  letter-spacing: 2px; /* Adjust the letter spacing as needed */
+}
+.fa-eye:hover{
+  color: #5d0aab;
+ }
+ .fa-trash{
+  color: #482668;
+ }
+ .fa-trash:hover{
+  color: #5d0aab;
+ }

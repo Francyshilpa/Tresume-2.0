@@ -21,7 +21,8 @@ import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimesheetReportComponent } from './timesheet-report.component ';
-
+import { JobBoardusageReportComponent } from './jobboard-usage-report.component';
+import { PerformanceReportsComponent } from './performance-report.component';
 @NgModule({
     imports: [
         CommonModule,
@@ -48,7 +49,9 @@ import { TimesheetReportComponent } from './timesheet-report.component ';
         JobBoardAuditReportComponent,
         ComplianceReportComponent,
         PFAReportComponent,
-        DocExpiryReportComponent
+        DocExpiryReportComponent,
+        JobBoardusageReportComponent,
+        PerformanceReportsComponent
     ],
     providers: []
 })

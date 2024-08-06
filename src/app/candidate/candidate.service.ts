@@ -40,8 +40,8 @@ export class CandidateService {
         return this.http.post<ResponseDetails>(this.endpoint + 'uploadinsert', request);
     }
 
-    getSiteVisitDetails(id: RequestItem): Observable<ResponseDetails> {
-        return this.http.get<ResponseDetails>(this.endpoint + 'sitevisit/' + id);
+    getSiteVisitDetails(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'sitevisit' , request);
     }
 
     getTraineeEduDetails(id: RequestItem): Observable<ResponseDetails> {
@@ -50,6 +50,14 @@ export class CandidateService {
 
     updateJobDuties(request: any): Observable<ResponseDetails> {
         return this.http.post<ResponseDetails>(this.endpoint + 'updateJobDuties', request);
+    }
+
+    updatesupervised(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'updatesupervised', request);
+    }
+
+    updateworktype(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'updateworktype', request);
     }
 
     getPlacementDetails(placementID: number) {
@@ -66,6 +74,12 @@ export class CandidateService {
 
     changeDocStatus(request: any): Observable<ResponseDetails> {
         return this.http.post<ResponseDetails>(this.endpoint + 'changeDocStatus', request);
+    }
+    getplacementsBytID(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'getplacementsBytID', request);
+    }
+    UpdateplacementsBytID(request: any): Observable<ResponseDetails> {
+        return this.http.post<ResponseDetails>(this.endpoint + 'UpdateplacementsBytID', request);
     }
 
 }

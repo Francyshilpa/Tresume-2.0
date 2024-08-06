@@ -1,24 +1,26 @@
 
 .btn {
-    background-color: #46103d ;
+    background-color: #482668 ;
     color: #fff; 
   }
   i{
     margin: 5px;
-    color: #46103d;
+    color: #482668;
     cursor: pointer;
   }
-  .container{
+  .container-fluid{
     background-color: #fff;
   }
   .main{
-    border-top:3px solid  #49274A;
-    border-bottom:3px solid  #49274A;
+    border-top:3px solid  #482668;
+    border-bottom:3px solid  #482668;
   }
   .pagination {
     justify-content: flex-end;
   }
-  
+  .btn:hover{
+    background-color: #5d0aab;
+  }
 .custom-select-style {
     width: 70px; 
   }
@@ -30,7 +32,7 @@
   }
   
   table {
-    width: 100%;
+    // width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
   }
@@ -66,4 +68,155 @@
 tbody{
   margin-bottom: 10px;
   padding-bottom: 10px;
+}
+.nav-tabs {
+  justify-content: space-around;
+  position: relative;
+  color: black;
+}
+
+.nav-item {
+  position: relative;
+}
+.nav-tabs .nav-link {
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: black;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  transition: all 0.3s;
+  border-bottom: 4px solid;
+  border-bottom: 4px solid #482668;
+}
+
+.nav-link.active::after {
+  width: 100%;
+  left: 0;
+}
+.col{
+  color: #482668;
+}
+.nav-item .nav-link {
+  transition: background-color 0.3s ease;
+}
+
+.nav-item .nav-link:hover {
+  background-color: rgba(241, 241, 241, 0.76);
+}
+.tab-content {
+  margin-top: 20px;
+}
+.nav-link {
+    font-size: 20px;
+    color: #333; 
+    color: black;
+}
+
+.modal {
+  background-color: transparent;
+}
+
+.modal-dialog {
+  margin: 10% auto;
+}
+
+.modal-content {
+  border: 1px solid black;
+  box-shadow: none;
+}
+
+.modal-body {
+  text-align: center;
+  padding: 20px 0 5px 0;
+}
+
+
+.modal-footer {
+  border-top: none; 
+}
+
+.con-text{
+  font-size: 18px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 8px 8px;
+  border-radius: 25px;
+  color: white;
+  height: 25px;
+  width: 25px;
+  font-weight: 400;
+}
+
+.tooltip1 {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+  font-size: 20px;
+}
+
+.tooltip1 .tooltiptext1 {
+  visibility: hidden;
+  width: 200px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: 105%;
+  font-size: 12px;
+}
+
+.text-wrap {
+  white-space: normal !important;
+}
+.status-bg{
+  background-color: #eff0ea;
+}
+/* reminder.component.css */
+.reminder-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+}
+.list-group-item-dark {
+  font-size: 16px;
+}
+
+.button {
+  margin: 8px;
+  width: 128px;
+}
+mat-form-field{
+  margin-right: 10px;
+}
+.filter-elements{
+  cursor: pointer;
+  font-size: 18px;
+}
+.filter-elements:hover{
+  color: rgb(19, 19, 243);
+}
+
+.shadow-style {
+  cursor: pointer; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s; 
+}
+
+.shadow-style:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }

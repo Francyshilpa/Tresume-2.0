@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe, formatDate } from '@angular/common';
-import { Chart } from 'chart.js';
 import { ChartOptions, ChartType, ChartDataSets } from 'chart.js';
 import { Label, MultiDataSet, SingleDataSet, Color } from 'ng2-charts';
-import { zip } from 'rxjs';
 import { DashboardService, RequestItem } from './dashboard.service';
-import { ResponseDetails, CardType } from './model';
-import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { ReportsService } from '../reports/reports.service';
+import { MessageService } from 'primeng/api';
+import { CookieService } from 'ngx-cookie-service';
+import { Console } from 'console';
 
 interface IRange {
   value: Date[];
@@ -19,70 +18,66 @@ interface IRange {
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
-  providers: [DashboardService, ReportsService]
+  providers: [DashboardService, ReportsService, MessageService, CookieService,DatePipe]
 })
 export class DashboardComponent implements OnInit {
 
+  loading: boolean = false;
 
   public title = 'Tresume-NG';
   public traineeID: number = 5;
-  public traineeDetails: any = {};
-  public hidePlacementFields: boolean = true;
-  public hideBenchFields: boolean = true;
-  public hideLegalFields: boolean = true;
   public hideInterviewsFields: boolean = true;
-  public hideSubmissionsFields: boolean = true;
-  public hideFTCFields: boolean = true;
-  public hideJBFields: boolean = true;
-
-  public active_toogle = "dropdown_display";
-  public isOpen: boolean = false;
-  public doughnutChartData: SingleDataSet = [];
-  public doughnutChartLabels: Label[] = [];
-  public doughnutChart: any[] = [];
-
-  public jobBoardChartData: SingleDataSet = [];
-  public jobBoardChartLabels: Label[] = [];
-
   public jobBReqChartData: SingleDataSet = [];
+  public  DiceChartData: any[] = [{ data: [] }];
   public jobReqChartLabels: Label[] = [];
+  public DiceChartLabels: Label[] = [];
+  public MonsterusedLabels: Label[] = [];
+  public CBusedLabels: Label[] = [];
 
-  public complianceChartData: SingleDataSet = [];
-  public complianceChartLabels: Label[] = [];
+  public CBChartData: SingleDataSet = [];
+  public CBChartLabels: Label[] = [];
 
-  public barChartData1: ChartDataSets[] = [];
-  public legalChartData: ChartDataSets[] = [];
-
-  public doughnutBenchChartData: SingleDataSet = [];
-  public doughnutBenchChartLabels: Label[] = [];
-
-  public doughnutSubChartData: SingleDataSet = [];
-  public doughnutSubChartLabels: Label[] = [];
-
-  public lineChartLegend = true;
-  public lineChartType: ChartType = 'line';
-  public lineChartPlugins = [];
-
-  public barChartLabels: Label[] = [''];
-  public legalChartLabels: Label[] = [];
-  public barChartType: ChartType = 'bar';
-  public barChartType1: ChartType = 'horizontalBar';
-  public barChartLegend = true;
-  public barChartPlugins = [];
+  public MonsterChartData: SingleDataSet = [];
+  public MonsterChartLabels: Label[] = [];
   public chartOptions: ChartOptions = {
     responsive: true,
     legend: {
-      /* position: 'right', */
       display: this.hide(),
       fullWidth: false,
       position: this.position()
     }
   }
-
+  AccessOrg: string;
+  adminFtcData: any;
+  adminDsrData: any;
+  adminPlacementData: any;
+  UserFtcData: any;
+  UserDsrData: any;
+  UserPlacementData: any;
+  PChartLabels: any;
+  PChartData: any;
+  userName: any;
+  IsAdmin: any;
+  UserRole: any;
+  UserDSRData: any;
+  UserInterviewData: any;
+  UserPlacementsData: any;
+  FullAccess: string;
+  ViewOnly: string;
+  totalFTCCount: number = 0;
+  totalSubmissionCount: number = 0;
+  totalInterviewCount: number = 0;
+  totalPlacementCount: number = 0;
+  totalMonsterCount: number = 0;
+  totalCBCount: number = 0;
+  totalDiceCount: number = 0;
+  totalDiceUsed: number = 0;
+  public routeLinks(route: string) {
+    this.router.navigate(['reports/' + route])
+  }
   public complianceChartOptions: ChartOptions = {
     responsive: true,
     legend: {
-      /* position: 'right', */
       display: this.hide(),
       fullWidth: false,
       position: this.position()
@@ -111,69 +106,170 @@ export class DashboardComponent implements OnInit {
     return true;
   }
 
-  public chartColors: any[] = [
-    { backgroundColor: ["#EA6A47", "#6F295B", "#c874b3", "#ff20c8", "#B9E8E0"] },
-    { backgroundColor: ["#B9E8E0", "#ff20c8", "#c874b3", "#940571", "#665191"] }
-  ]
-
-  public doughnutChartData1: SingleDataSet = [
-    [10, 22, 56],
+  chartType: string = 'bar';
+  chartLabels: string[] = [];
+  chartData: ChartDataSets[] = [
+    { data: [], label: 'FTC Data' }
   ];
+  dsrChartLabels: Label[] = [];
+  dsrChartData: ChartDataSets[] = [
+    { data: [], label: 'DSR Data' }
+  ];
+  dsrChartColors: Color[] = [];
+  chartColors: any[] = [];
 
-  public doughnutChartType: ChartType = 'doughnut';
+  adminInterviewData: any[] = [];
+  Dicedata: any[] = [];
+  userDicedata: any[] = [];
+  Monsterdata: any[] = [];
+  userMonsterdata: any[] = [];
+  CBdata: any[] = [];
+  userCBdata: any[] = [];
+  InterviewchartData: ChartDataSets[] = [{ data: [], label: 'Interviews' }];
 
-  public barChartOptions: ChartOptions = {
-    responsive: true,
-    legend: {
-      position: 'right',
-    },
-    scales: {
-      yAxes: [{
-        stacked: false
-      }],
-      xAxes: [{
-        stacked: false
-      }]
-    }
-  };
+  interviewChartLabels: string[] = [];
+  interviewChartData: any[] = [];
+  doughnutChartType = 'doughnut';
+  pieChartType = 'pie';
+  interviewChartOptions: any = {};
+  interviewChartColors: any[] = [];
+  PlacementChartLabels: string[] = [];
+  PlacementChartData: any[] = [];
+  PlacementchartData: ChartDataSets[] = [{ data: [], label: 'Placement' }];
 
-  public interviewChartOptions1: ChartOptions = {
-    responsive: true,
-    legend: {
-      position: 'right',
-      display: false
-    },
-    scales: {
-      yAxes: [{
-        stacked: true
-      }],
-      xAxes: [{
-        stacked: true
-      }]
-    }
-  };
+  public defaultStartDate: string;
+  public defaultEndDate: string;
+  public currentDate: Date;
+  public currentSD: string;
+  public currentED: any;
+  public lastMonthSD: string;
+  public lastMonthED: any;
+  public prevMonthED: any;
+  public prevMonthSD: any;
+  public next30days: any;
+  public todayDate: any;
 
-  public legalChartOptions: ChartOptions = {
-    responsive: true,
-    legend: {
-      position: 'top',
-      display: false
-    },
-    scales: {
-      yAxes: [{
-        stacked: true
-      }],
-      xAxes: [{
-        stacked: true
-      }]
-    },
-    plugins: {
-      datalabels: {
-        anchor: 'end',
-        align: 'end',
+  Adminrecord() {
+    this.loading = true;
+    const req = { 
+      AccessOrg: this.AccessOrg,
+      StartDate: this.defaultStartDate,
+      EndDate: this.defaultEndDate
+    };
+
+    this.service.getAdminDashboardData(req).subscribe(
+      (response: any) => {
+        console.log('API Response:', response); // Log the response to check its structure
+        if (this.checkFullAccess(1)) {
+          this.loading = false;
+          this.hideInterviewsFields = false;
+
+          // Initialize Dicedata to an empty array if JobboardData is undefined
+          this.Dicedata = response.jobboarddata || [];
+          this.jobBReqChartData = this.Dicedata.map((item: { diceused: any; }) => item.diceused);
+          this.jobReqChartLabels = this.Dicedata.map((item: { Recruiter: any; }) => `${item.Recruiter}`);
+          this.totalDiceCount = this.Dicedata.reduce((sum: any, current: { diceused: any; }) => sum + (current.diceused || 0), 0);
+          console.log(this.checkFullAccess(1));
+          console.log('Dice :', this.Dicedata);
+
+          this.CBdata = response.jobboarddata || [];
+          this.totalCBCount = this.CBdata.reduce((sum: any, current: { cbused: any; }) => sum + (current.cbused || 0), 0);
+          this.CBChartData = this.CBdata.map((item: { cbused: any; }) => item.cbused);
+          this.CBChartLabels = this.CBdata.map((item: { Recruiter: any; }) => `${item.Recruiter}`);
+
+          this.Monsterdata = response.jobboarddata || [];
+          this.totalMonsterCount = this.Monsterdata.reduce((sum: any, current: { monsterused: any; }) => sum + (current.monsterused || 0), 0);
+          this.MonsterChartData = this.Monsterdata.map((item: { monsterused: any; }) => item.monsterused);
+          this.MonsterChartLabels = this.Monsterdata.map((item: { Recruiter: any; }) => `${item.Recruiter}`);
+        }
+
+        if (this.checkFullAccess(2)) {
+          this.adminFtcData = response.FtcData || [];
+          this.totalFTCCount = this.adminFtcData.reduce((sum: any, current: { RecruiterCount: any; }) => sum + (current.RecruiterCount || 0), 0);
+          this.chartLabels = this.adminFtcData.map((item: { Recruiter: any; }) => item.Recruiter);
+          this.chartData[0].data = this.adminFtcData.map((item: { RecruiterCount: any; }) => item.RecruiterCount);
+          console.log(this.chartData);
+          this.chartColors = [{
+            backgroundColor: [
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+            ]
+          }];
+
+          // DSR Data
+          this.adminDsrData = response.DsrData || [];
+          this.totalSubmissionCount = this.adminDsrData.reduce((sum: any, current: { SubmissionCount: any; }) => sum + (current.SubmissionCount || 0), 0);
+          this.dsrChartLabels = this.adminDsrData.map((item: { Marketer: any; }) => item.Marketer);
+          this.dsrChartData[0].data = this.adminDsrData.map((item: { SubmissionCount: any; }) => item.SubmissionCount);
+          this.dsrChartColors = [{
+            backgroundColor: [
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+            ]
+          }];
+          console.log('DSR data:',this.adminDsrData)
+
+          // Interview Data
+          this.adminInterviewData = response.Interviewdata || [];
+          this.totalInterviewCount = this.adminInterviewData.reduce((sum: any, current: { InterviewCount: any; }) => sum + (current.InterviewCount || 0), 0);
+          this.interviewChartLabels = this.adminInterviewData.map((item: { Recruiter: any; }) => item.Recruiter);
+          this.interviewChartData = [{
+            data: this.adminInterviewData.map((item: { InterviewCount: any; }) => item.InterviewCount),
+            backgroundColor: ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F']
+          }];
+
+          // Placement Data
+          this.adminPlacementData = response.PlacementData || [];
+          this.hideInterviewsFields = false;
+          this.totalPlacementCount = this.adminPlacementData.reduce((sum: any, current: { MarketerCount: any; }) => sum + (current.MarketerCount || 0), 0);
+
+          this.PChartLabels = this.adminPlacementData.map((item: { MarketerName: any; }) => item.MarketerName);
+          this.PChartData = [{
+            data: this.adminPlacementData.map((item: { MarketerCount: any; }) => item.MarketerCount),
+            backgroundColor: ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F']
+          }];
+        }
+      },
+      (error: any) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Failed to Load Data' });
       }
+    );
+  }
+
+  public randomColor(numColors: number) {
+    const colors: string[] = [];
+    for (let i = 0; i < numColors; i++) {
+      const hexColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+      colors.push(hexColor);
     }
-  };
+
+    return colors;
+  }
 
   public barChartData: ChartDataSets[] = [
     { data: [65], label: 'H1-B' },
@@ -210,43 +306,6 @@ export class DashboardComponent implements OnInit {
       position: 'right',
     }
   };
-  public lineChartColors: Color[] = [
-    {
-      borderColor: '#940571',
-      /* backgroundColor: ["#940571"], */
-    },
-    {
-      borderColor: '#665191',
-      /* backgroundColor: ["#665191"], */
-    },
-    {
-      borderColor: '#c874b3',
-      /* backgroundColor: ["#c874b3"] */
-    },
-  ];
-
-  public lineChartData: ChartDataSets[] = [];
-  public totalFTC: number = 0;
-  public totalInterviews: number = 0;
-  public totalSubmissions: number = 0;
-  public defaultStartDate: string;
-  public defaultEndDate: string;
-  public currentDate: Date;
-  public currentSD: string;
-  public currentED: any;
-  public lastMonthSD: string;
-  public lastMonthED: any;
-  public prevMonthED: any;
-  public prevMonthSD: any;
-  public next30days: any;
-  public todayDate: any;
-  public compliancePercentage: any;
-  public totalCompleteProfiles: any;
-  public totalIncompleteProfiles: any;
-
-  public h1bexpcurrentMonth: any[] = [];
-
-  bsConfig?: Partial<BsDatepickerConfig>;
 
   public ranges: IRange[] = [{
     value: [new Date(new Date().setDate(new Date().getDate() - 7)), new Date()],
@@ -259,14 +318,17 @@ export class DashboardComponent implements OnInit {
     label: 'Last 90 Days'
   }];
 
-  constructor(private route: ActivatedRoute, private service: DashboardService, private router: Router, private reportService: ReportsService) {
+  constructor(private route: ActivatedRoute, private service: DashboardService, private router: Router, private reportService: ReportsService, private messageService: MessageService, private cookieService: CookieService,private datePipe: DatePipe) {
     this.traineeID = this.route.snapshot.params["traineeId"];
     this.defaultStartDate = this.dateFormatter(this.ranges[1].value[0]);
     this.defaultEndDate = this.dateFormatter(this.ranges[1].value[1]);
     sessionStorage.setItem("Route", 'Dashboard');
-
-    /* this.currentMonthDates = ((new Date().setDate(new Date().getMonth(), new Date().getFullYear())));
-    console.log('this.currentMonthDates', this.currentMonthDates) */
+    this.AccessOrg = this.cookieService.get('AccessOrg');
+    this.userName = this.cookieService.get('userName1');
+    this.IsAdmin = this.cookieService.get('IsAdmin');
+    this.UserRole = this.cookieService.get('UserRole');
+    this.FullAccess = this.cookieService.get('FullAccess');
+    this.ViewOnly = this.cookieService.get('ViewOnly');
 
     this.currentDate = new Date(new Date());
     this.currentSD = this.dateFormatter(new Date(this.currentDate.getUTCFullYear(), this.currentDate.getUTCMonth(), 1));
@@ -290,299 +352,18 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.getTraineeDetails();
-    this.getFTCDetails(this.defaultStartDate, this.defaultEndDate);
-    this.getPlacementDetails(this.defaultStartDate, this.defaultEndDate);
-    this.getBenchDetails(this.defaultStartDate, this.defaultEndDate);
-    this.getInterviewDetails(this.lastMonthSD, this.lastMonthED);
-    this.getSubmissionDetails(this.defaultStartDate, this.defaultEndDate);
-    this.getLegalInfo();
-    this.getH1BExpiry(this.todayDate, this.next30days);
-    this.getSiteVistReport();
-    this.getJobBoardDetails();
-    this.jobReqChartLabels = ['Rashi', 'Suchita', 'Ram'];
-    this.jobBReqChartData = [3, 5, 8];
-
-  }
-
-  public getTraineeDetails() {
-    this.service.getTraineeDetails(this.traineeID).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.traineeDetails = response[0];
-        sessionStorage.setItem("FirstName", this.traineeDetails.FirstName);
-        sessionStorage.setItem("LastName", this.traineeDetails.LastName);
-        sessionStorage.setItem("TraineeID", this.traineeID.toString());
-      }
-    });
-  }
-
-  public getFTCDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID,
-      startDate: startDate,
-      endDate: endDate
+    this.loading = true;
+    if(this.UserRole == 1){
+      this.Adminrecord();
+    }else if(this.UserRole ==2){
+      this.Userrecord();
+    }else{
+      this.SuperAdminrecord();
     }
-    this.service.getFTC(requestItem).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.hideFTCFields = false;
-        let countArray = response.map((y: any) => y.FTCCount);
-        this.totalFTC = countArray.reduce((sum: any, current: any) => sum + current);
-        this.doughnutChartData = response.map((y: any) => y.FTCCount).slice(0, 5);
-        this.doughnutChartLabels = response.map((z: any) => z.RecruiterName).slice(0, 5);
-      }
-    });
   }
 
-  public getPlacementDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID,
-      startDate: startDate,
-      endDate: endDate
-    }
-    this.service.getPlacements(requestItem).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.hidePlacementFields = false;
-        let barData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-        let barLabel = response.map((y: any) => y.MarkerterName).slice(0, 5);
-        //this.barChartLabels = barLabel;
-        this.barChartData1 = [];
-        let contArry: any = [];
-        for (let i = 0; i < 5; i++) {
-          contArry.push({
-            data: [barData[i]],
-            label: barLabel[i]
-          });
-        }
-        this.barChartData1 = contArry;
-        /* requestItem.startDate = this.prevMonthSD;
-        requestItem.endDate = this.prevMonthED;
-        this.service.getPlacements(requestItem).subscribe(x => {
-          let response = x.result;
-          if (response) {
-            this.hidePlacementFields = false;
-            let barData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-            let barLabel = response.map((y: any) => y.MarkerterName).slice(0, 5);
-            for (let i = 0; i < 5; i++) {
-              this.barChartData1[i].data?.push(barData[i]);
-            }
-          }
-          this.barChartData1 = contArry;
-          requestItem.startDate = this.currentSD;
-          requestItem.endDate = this.currentED;
-          this.service.getPlacements(requestItem).subscribe(x => {
-            let response = x.result;
-            if (response) {
-              this.hidePlacementFields = false;
-              let barData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-              let barLabel = response.map((y: any) => y.MarkerterName).slice(0, 5);
-              for (let i = 0; i < 5; i++) {
-                this.barChartData1[i].data?.push(barData[i]);
-              }
-            }
-
-          });
-        }); */
-      }
-    });
-  }
-
-  public getBenchDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID,
-      startDate: startDate,
-      endDate: endDate
-    }
-    this.service.getBench(requestItem).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.hideBenchFields = false;
-        this.doughnutBenchChartData = response.map((y: any) => y.BenchCount).slice(0, 5);
-        this.doughnutBenchChartLabels = response.map((z: any) => z.MarketerName).slice(0, 5);
-      }
-    });
-  }
-
-  public getInterviewDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID,
-      startDate: startDate,
-      endDate: endDate
-    }
-    this.service.getInterviews(requestItem).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.hideInterviewsFields = false;
-        let countArray = response.map((y: any) => y.PlacemntCount);
-        this.totalInterviews = countArray.reduce((sum: any, current: any) => sum + current);
-        let lineData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-        let lineLabel = response.map((y: any) => y.MarkerterName.split(" ")[0]).slice(0, 5);
-        this.lineChartData = [];
-        for (let i = 0; i < 5; i++) {
-          this.lineChartData.push({
-            data: [lineData[i]],
-            label: lineLabel[i]
-          });
-        }
-        requestItem.startDate = this.prevMonthSD;
-        requestItem.endDate = this.prevMonthED;
-        this.service.getInterviews(requestItem).subscribe(x => {
-          let response = x.result;
-          if (response) {
-            this.hideInterviewsFields = false;
-            let countArray = response.map((y: any) => y.PlacemntCount);
-            this.totalInterviews = countArray.reduce((sum: any, current: any) => sum + current);
-            let lineData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-            let lineLabel = response.map((y: any) => y.MarkerterName.split(" ")[0]).slice(0, 5);
-            for (let i = 0; i < 5; i++) {
-              let filter = this.lineChartData.filter(x => x.label == lineLabel[i])[0];
-              if (filter) {
-                this.lineChartData[i].data?.push(lineData[i])
-              }
-              else {
-                this.lineChartData.push({
-                  data: [lineData[i]],
-                  label: lineLabel[i]
-                });
-              }
-            }
-          }
-          requestItem.startDate = this.currentSD;
-          requestItem.endDate = this.currentED;
-          this.service.getInterviews(requestItem).subscribe(x => {
-            let response = x.result;
-            if (response) {
-              this.hideInterviewsFields = false;
-              let countArray = response.map((y: any) => y.PlacemntCount);
-              this.totalInterviews = countArray.reduce((sum: any, current: any) => sum + current);
-              let lineData = response.map((y: any) => y.PlacemntCount).slice(0, 5);
-              let lineLabel = response.map((y: any) => y.MarkerterName.split(" ")[0]).slice(0, 5);
-              for (let i = 0; i < 5; i++) {
-                let filter = this.lineChartData.filter(x => x.label == lineLabel[i])[0];
-                if (filter) {
-                  this.lineChartData[i].data?.push(lineData[i])
-                }
-                else {
-                  this.lineChartData.push({
-                    data: [lineData[i]],
-                    label: lineLabel[i]
-                  });
-                }
-              }
-              console.log('this.lineChartData', this.lineChartData)
-            }
-          });
-        });
-      }
-    });
-  }
-
-  public getSubmissionDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID,
-      startDate: startDate,
-      endDate: endDate
-    }
-    this.service.getSubmissions(requestItem).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        let countArray = response.map((y: any) => y.BenchCount);
-        this.totalSubmissions = countArray.reduce((sum: any, current: any) => sum + current);
-        if (this.totalSubmissions > 0) {
-          this.hideSubmissionsFields = false;
-        }
-        this.doughnutSubChartData = response.map((y: any) => y.BenchCount).slice(0, 5);
-        this.doughnutSubChartLabels = response.map((z: any) => z.MarketerName).slice(0, 5);
-      }
-    });
-  }
-
-  public getLegalInfo() {
-    this.service.getLegalStatus(this.traineeID).subscribe(x => {
-      let response = x.result;
-      if (response) {
-        this.hideLegalFields = false;
-        let barData = response.map((y: any) => y.Total);
-        let barLabel = response.map((y: any) => y.LegalStatus);
-        let H1BStatus = response.filter((y: any) => y.LegalStatusID == 14)[0];
-        let GCStatus = response.filter((y: any) => y.LegalStatusID == 3)[0];
-        let USCStatus = response.filter((y: any) => y.LegalStatusID == 2)[0];
-        let OtherStatus = response.filter((y: any) => y.LegalStatusID != 2 && y.LegalStatusID != 3 && y.LegalStatusID != 14);
-        let TotalOtherStatus = 0;
-        OtherStatus.forEach((x: any) => {
-          TotalOtherStatus += x.Total;
-        });
-        this.legalChartLabels = ["H1B", "Green Card", "US Citizen", "Others"];
-        this.legalChartData = [];
-        this.legalChartData = [{
-          data: [H1BStatus?.Total, GCStatus?.Total, USCStatus?.Total, TotalOtherStatus],
-          label: 'Total'
-        }];
-      }
-    });
-  }
-
-  public getJobBoardDetails(startDate?: string, endDate?: string) {
-    let requestItem: RequestItem = {
-      traineeID: this.traineeID
-    }
-    this.service.getJobBoardUsage().subscribe(x => {
-      let response = x.result;
-      console.log('jb', response)
-      if (response) {
-        this.hideJBFields = false;
-        let countArray = response.map((y: any) => y.count);
-        this.totalFTC = countArray.reduce((sum: any, current: any) => sum + current);
-        this.jobBoardChartData = response.map((y: any) => y.count).slice(0, 5);
-        this.jobBoardChartLabels = response.map((z: any) => z.JobboardSource).slice(0, 5);
-      }
-    });
-  }
-
-  public toggle() {
-    this.isOpen = !this.isOpen;
-  }
-
-
-  public onValueChange(value: any, type: CardType) {
-    switch (type) {
-      case CardType.FTC: {
-        let startDate = this.dateFormatter(value[0]);
-        let endDate = this.dateFormatter(value[1]);
-        this.getFTCDetails(startDate, endDate);
-        break;
-      }
-      case CardType.Placements: {
-        let startDate = this.dateFormatter(value[0]);
-        let endDate = this.dateFormatter(value[1]);
-        this.getPlacementDetails(startDate, endDate);
-        break;
-      }
-      case CardType.Bench: {
-        let startDate = this.dateFormatter(value[0]);
-        let endDate = this.dateFormatter(value[1]);
-        this.getBenchDetails(startDate, endDate);
-        break;
-      }
-      case CardType.Legal: {
-
-        break;
-      }
-      case CardType.Interviews: {
-        let startDate = this.dateFormatter(value[0]);
-        let endDate = this.dateFormatter(value[1]);
-        this.getInterviewDetails(startDate, endDate);
-        break;
-      }
-      case CardType.Submissions: {
-        let startDate = this.dateFormatter(value[0]);
-        let endDate = this.dateFormatter(value[1]);
-        this.getSubmissionDetails(startDate, endDate);
-        break;
-      }
-    }
+  checkFullAccess(numberToCheck: any): boolean {
+    return this.FullAccess.includes(numberToCheck) || this.ViewOnly.includes(numberToCheck);
   }
 
   public dateFormatter(value: any) {
@@ -594,50 +375,232 @@ export class DashboardComponent implements OnInit {
     let formattedDate = formatDate(value, 'yyyy/MM/dd', "en-US");
     return formattedDate;
   }
+  // For User 
+  public lineChartType: ChartType = 'line';
+  public FTCchartData: any[] = [{ data: [], label: 'FTC Records' }];
+  public FTCchartLabels: string[] = [];
+  
+  
+  public DSRchartDatas: ChartDataSets[] = [{ data: [], label: 'DSR Data' }];
+  public DSRchartLabelss: Label[] = [];
+  
+  public InterviewschartData: ChartDataSets[] = [{ data: [], label: 'Interview Data' }];
+  public InterviewchartLabels: Label[] = [];
+  
+  public PlacementschartData: ChartDataSets[] = [{ data: [], label: 'Placement Data' }];
+  public PlacementchartLabels: Label[] = [];
+  
+  public jobBReqChartDatas: any[] = [{ data: [], label: 'Dice Used' }];
+  public MonsterchartData: any[] = [{ data: [], label: 'Monster Used' }];
+  public CBchartData: any[] = [{ data: [], label: 'CB Used' }];
 
-  public getH1BExpiry(startDate?: string, endDate?: string) {
-    let requestItem: any = {
-      startDate: startDate,
-      endDate: endDate,
+  Userrecord() {
+    this.loading = true;
+    const req = {
       traineeId: this.traineeID,
-    }
-    this.reportService.getH1BExpiryReport(requestItem).subscribe((x: any) => {
-      console.log('x', x)
-      this.h1bexpcurrentMonth = x.result;
-    });
-  }
-
-  public getSiteVistReport() {
-    let requestItem: any = {
-      traineeId: this.traineeID,
-    }
-    this.compliancePercentage = [];
-    let groupArr: any = [];
-    this.reportService.getSiteVisitReport(requestItem).subscribe((x: any) => {
-      console.log('x', x)
-      const nullValues = x.result.filter((value: any) => {
-        const nullValues = Object.values(value).filter(value => (value === null || value === ""));
-        this.compliancePercentage.push(Number(((12 - nullValues.length) / 12 * 100).toFixed(2)));
-      }
-      );
-      this.compliancePercentage.filter((x: any) => {
-        if (x == 100) {
-          groupArr.push(x);
+      StartDate: this.defaultStartDate,
+      EndDate: this.defaultEndDate,
+      username: this.userName
+    };
+  
+    this.service.getUserDashboardData(req).subscribe(
+      (response: any) => {
+        this.loading = false;
+        this.hideInterviewsFields = false;
+  
+        if (this.checkFullAccess(1)) {
+          // Monster Data
+          this.userMonsterdata = response.monsterData || [];
+          this.MonsterusedLabels = this.userMonsterdata.map((item: { Date: any }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.MonsterchartData[0].data = this.userMonsterdata.map((item: { RecordCount: any }) => item.RecordCount);
+          this.totalMonsterCount = this.userMonsterdata.reduce((sum: any, current: { RecordCount: any; }) => sum + (current.RecordCount || 0), 0);
+  
+          // Dice Data
+          this.userDicedata = response.diceData || [];
+          this.jobReqChartLabels = this.userDicedata.map((item: { Date: any }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.jobBReqChartDatas[0].data = this.userDicedata.map((item: { RecordCount: any }) => item.RecordCount);
+          this.totalDiceUsed = this.userDicedata.reduce((sum: any, current: { RecordCount: any; }) => sum + (current.RecordCount || 0), 0);
+  
+          // CB Data
+          this.userCBdata = response.cbData || [];
+          this.CBusedLabels = this.userCBdata.map((item: { Date: any }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.CBchartData[0].data = this.userCBdata.map((item: { RecordCount: any }) => item.RecordCount);
+          this.totalCBCount = this.userCBdata.reduce((sum: any, current: { RecordCount: any; }) => sum + (current.RecordCount || 0), 0);
         }
-      });
-      this.totalCompleteProfiles = ((groupArr.length / this.compliancePercentage.length) * 100).toFixed(2);
-      this.totalIncompleteProfiles = (((this.compliancePercentage.length - groupArr.length) / this.compliancePercentage.length) * 100).toFixed(2);
-      this.complianceChartData = [this.totalCompleteProfiles, this.totalIncompleteProfiles];
-      this.complianceChartLabels = ['100% Compliant', 'Non-compliant'];
-    });
+  
+        if (this.checkFullAccess(2)) {
+          // FTC Data
+          this.UserFtcData = response.FtcData || [];
+          this.totalFTCCount = this.UserFtcData.reduce((sum: any, current: { SubmissionCount: any; }) => sum + (current.SubmissionCount || 0), 0);
+          this.FTCchartLabels = this.UserFtcData.map((item: { Date: any; }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.FTCchartData[0].data = this.UserFtcData.map((item: { SubmissionCount: any; }) => item.SubmissionCount);
+  
+          // DSR Data
+          this.UserDSRData = response.DsrData || [];
+          this.totalSubmissionCount = this.UserDSRData.reduce((sum: any, current: { RecordCount: any; }) => sum + (current.RecordCount || 0), 0);
+          this.DSRchartLabelss = this.UserDSRData.map((item: { Date: any; }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.DSRchartDatas[0].data = this.UserDSRData.map((item: { RecordCount: any; }) => item.RecordCount);
+          console.log('DSR Chart Data:', this.DSRchartDatas);
+  
+          // Interview Data
+          this.UserInterviewData = response.Interviewdata || [];
+          this.totalInterviewCount = this.UserInterviewData.reduce((sum: any, current: { InterviewCount: any; }) => sum + (current.InterviewCount || 0), 0);
+          if (this.UserInterviewData.length) {
+            this.InterviewchartLabels = this.UserInterviewData.map((item: { Date: any; }) =>
+              this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+            );
+            this.InterviewchartData[0].data = this.UserInterviewData.map((item: { InterviewCount: any; }) => item.InterviewCount);
+          } else {
+            this.InterviewchartLabels = [];
+            this.InterviewchartData[0].data = [];
+          }
+  
+          // Log Interview chart data
+          console.log('Interview Chart Data:', this.InterviewchartData);
+          console.log('Interview Chart Labels:', this.InterviewchartLabels);
+  
+          // Placements Data
+          this.UserPlacementsData = response.PlacementData || [];
+          this.totalPlacementCount = this.UserPlacementsData.reduce((sum: any, current: { MarketerCount: any; }) => sum + (current.MarketerCount || 0), 0);
+          this.PlacementchartLabels = this.UserPlacementsData.map((item: { Date: any; }) =>
+            this.datePipe.transform(item.Date, 'MM-dd-yy') as string
+          );
+          this.PlacementschartData[0].data = this.UserPlacementsData.map((item: { PlacementCount: any; }) => item.PlacementCount);
+  
+          console.log(this.chartData);
+          this.chartColors = [{
+            backgroundColor: [
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+            ]
+          }];
+          console.log(this.PlacementChartData);
+        }
+      },
+      (error: any) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Failed to Load Data' });
+      }
+    );
   }
+  
 
-  public expiryReportMore() {
-    this.router.navigate(['/reports/h1bexpiry']);
+  SuperAdminrecord() {
+    this.loading = true;
+    const req = {
+      AccessOrg: this.AccessOrg,
+      StartDate: this.defaultStartDate,
+      EndDate: this.defaultEndDate
+    };
+
+    this.service.getSuperAdminDashboardData(req).subscribe(
+      (response: any) => {
+        this.loading = false;
+        this.hideInterviewsFields = false;
+        if (this.checkFullAccess(1)) {
+          this.Dicedata = response.Divisionwisecredit;
+          this.DiceChartData = this.Dicedata.map((item: { diceused: any;}) => `${item.diceused}`);
+          this.DiceChartLabels = this.Dicedata.map((item: { DivisionName: any; }) => item.DivisionName);
+
+          this.CBdata = response.Divisionwisecredit;
+          this.CBChartData = this.CBdata.map((item: { cbused: any; }) => item.cbused);
+          this.CBChartLabels = this.CBdata.map((item: { DivisionName: any; }) => item.DivisionName);
+
+          this.Monsterdata = response.Divisionwisecredit;
+          this.MonsterChartData = this.Monsterdata.map((item: { monsterused: any; }) => item.monsterused);
+          this.MonsterChartLabels = this.Monsterdata.map((item: { DivisionName: any; }) => item.DivisionName);
+        }
+        if(this.checkFullAccess(2)){
+          this.adminFtcData = response.FtcData;
+          this.chartLabels = this.adminFtcData.map((item: { Recruiter: any; }) => item.Recruiter);
+          this.chartData[0].data = this.adminFtcData.map((item: { RecruiterCount: any; }) => item.RecruiterCount);
+          this.chartColors = [{
+            backgroundColor: [
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+            ]
+          }]
+          // DSR Data
+          this.adminDsrData = response.DsrData;
+          this.dsrChartLabels = this.adminDsrData.map((item: { Marketer: any; }) => item.Marketer);
+          this.dsrChartData[0].data = this.adminDsrData.map((item: { SubmissionCount: any; }) => item.SubmissionCount);
+          this.dsrChartColors = [{
+            backgroundColor: [
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+            ]
+          }];
+  
+          // Interview Data
+          this.adminInterviewData = response.Interviewdata;
+          this.interviewChartLabels = this.adminInterviewData.map((item: { Recruiter: any; }) => item.Recruiter);
+          this.interviewChartData = [{
+            data: this.adminInterviewData.map((item: { InterviewCount: any; }) => item.InterviewCount),
+            backgroundColor: ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F']
+          }];
+  
+          // Placement Data
+          this.adminPlacementData = response.PlacementData;
+          this.hideInterviewsFields = false;
+          this.PChartLabels = this.adminPlacementData.map((item: { MarketerName: any; }) => item.MarketerName);
+          this.PChartData = [{
+            data: this.adminPlacementData.map((item: { MarketerCount: any; }) => item.MarketerCount),
+            backgroundColor: ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F',
+              '#F9F871', '#2C73D2', '#008E9B', '#008F7A', '#B39CD0',
+              '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F']
+          }];
+        }
+      },
+      (error: any) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Failed to Load Data' });
+      }
+    );
   }
-
-  public compReportMore() {
-    this.router.navigate(['/reports/compliance']);
-  }
-
 }

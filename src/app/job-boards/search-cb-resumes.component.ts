@@ -10,12 +10,12 @@ import { JobBoardsService } from './job-boards.service';
 import { CookieService } from 'ngx-cookie-service';
 import { PageChangedEvent } from 'ngx-bootstrap/pagination';
 import * as FileSaver from 'file-saver';
-//import * as htmlDocx from 'html-docx-js';
-//import * as html2pdf from 'html2pdf.js';
+// import * as htmlDocx from 'html-docx-js';
+// import * as html2pdf from 'html2pdf.js';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgxExtendedPdfViewerService, TextLayerRenderedEvent } from 'ngx-extended-pdf-viewer';
-
+import * as html2pdf from 'html2pdf.js';
 
 const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
     const byteCharacters = atob(b64Data);
@@ -46,6 +46,8 @@ const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
 
 
 export class SearchResumesCBComponent implements OnInit {
+
+    @ViewChild('pdfdoc') pdfdoc: ElementRef;
 
     form = new FormGroup({});
     model: any = {};
@@ -113,7 +115,21 @@ export class SearchResumesCBComponent implements OnInit {
         'Washington DC',
         'West Virginia',
         'Wisconsin',
-        'Wyoming'
+        'Wyoming',
+        //canada
+        'Ontario',
+        'Alberta',
+        'British Columbia',
+        'Manitoba',
+        'New Brunswick',
+        'Newfoundland and Labrador',
+        'Nova Scotia',
+        'Prince Edward Island',
+        'Quebec',
+        'Saskatchewan',
+        'Northwest Territories',
+        'Nunavut',
+        'Yukon'
     ];
 
     workStatus: any[] = [
@@ -139,6 +155,35 @@ export class SearchResumesCBComponent implements OnInit {
 
     ];
 
+    employedTypes = [
+        { value: 'True', name: 'True' },
+        { value: 'False', name: 'False' },
+    ]
+       jobTypes = [
+        { label: 'Contract to Hire', value: 'ETCH' },
+        { label: 'Contract - Corp-to-Corp', value: 'ETCC' },
+        { label: 'Contract - Independent 1099', value: 'ETCI' },
+        { label: 'Contract - W2', value: 'ETC2' },
+        { label: 'Consultant', value: 'ETCN' },
+        { label: 'Full-Time', value: 'ETFE' },
+        { label: 'Part-Time', value: 'ETPE' },
+        { label: 'Contractor', value: 'ETCT' },
+        { label: 'Intern', value: 'ETIN' },
+        { label: 'Seasonal/Temp', value: 'ETTS' },
+        { label: 'Not Specified', value: 'ETNS' },
+        { label: 'Permanent', value: 'ETPT' },
+        { label: 'Freelance', value: 'ETFL' },
+        { label: 'Apprenticeship', value: 'ETAP' },
+        { label: 'Student - Professional', value: 'ETSP' },
+        { label: 'Student - Apprentice', value: 'ETSA' },
+        { label: 'Temporary/Part Time', value: 'ETTP' },
+        { label: 'Temporary/Full Time', value: 'ETTF' },
+        { label: 'Per Diem', value: 'ETPD' },
+        { label: 'Full Time/Part Time', value: 'ETFP' },
+        { label: 'Franchises', value: 'ETFR' },
+        { label: 'Bank', value: 'ETBK' }
+    ];
+
     rowData: any;
     columnDefs: any;
     public gridOptions: GridOptions = {};
@@ -157,7 +202,11 @@ export class SearchResumesCBComponent implements OnInit {
     daysWithin: string;
     searchSkill: string;
     yearsOfExp: string;
+    excludeTerms: string;
     schoolName: string;
+    maxSkillsPerProfile: number;
+    selectedJobType: { label: string, value: string };
+    currentlyEmployed: { value: string, name: string };
     willingToRelocate: boolean;
     hasSecurityClearance: boolean;
     selectedWorkstatus: any[] = [];
@@ -196,13 +245,23 @@ export class SearchResumesCBComponent implements OnInit {
     jobID: any = 4;
     isallowed: any = true;
     divcandidateemail: any = '';
-
+    description: string = '';
     showcrediterror: boolean = false;
     cbcrediterror:boolean = false
+    cfullname: any;
+    clocation: any;
+    cphone: any;
+    cemail: any;
+    cworkpermit: any;
+    cyearsofExperience: any;
+    cjobtitle: any;
+    csocialsource: any;
+    ceducation: any;
+    cskill: any;
 
     constructor(private route: ActivatedRoute, private service: JobBoardsService, private cookieService: CookieService,
         private messageService: MessageService, private sanitizer: DomSanitizer) {
-        this.traineeId = sessionStorage.getItem("TraineeID");
+        this.traineeId = this.cookieService.get('TraineeID');
         if (this.traineeId == '') {
             this.traineeId = localStorage.getItem("TraineeID");
         }
@@ -210,6 +269,7 @@ export class SearchResumesCBComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.loading = true;
         this.cookieValue = this.cookieService.get('userName1')
         //division
         this.OrgID = this.cookieService.get('OrgID');
@@ -225,15 +285,22 @@ export class SearchResumesCBComponent implements OnInit {
         this.jobID = 4;
 
         this.initGrid();
-        //this.accessToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk3OGYxMjUzMGNiMjMzZWVkYTQwOTI1OGNiYzhjNTA3IiwidHlwIjoiYXQrand0In0.eyJpc3MiOiJodHRwczovL2F1dGguY2FyZWVyYnVpbGRlci5jb20iLCJuYmYiOjE2OTE0MTkyMDcsImlhdCI6MTY5MTQxOTIwNywiZXhwIjoxNjkxNDIxMzA3LCJhdWQiOiJyZWFkIiwic2NvcGUiOlsicmVhZCJdLCJhbXIiOlsicHdkIl0sImNsaWVudF9pZCI6IkM4YjE4YTQzYyIsImNsaWVudF9vd25lcl9pZCI6Ik9iYzNkZDA2ZDNlODJjYyIsInN1YiI6IlU3OTVIWjc0MURWM1NTODBIMkMiLCJhdXRoX3RpbWUiOjE2OTE0MTM4NTIsImlkcCI6ImxvY2FsIiwidXNlcl90eXBlIjoiRW1wbG95ZXJDb21wYW55IiwiYWNjb3VudHMiOlsiQTc5ME01NjZKNEpKMkxRRDMxViJdLCJhY2NvdW50ZGlkIjoiQTc5ME01NjZKNEpKMkxRRDMxViIsInNpZCI6IkY2Q0Y4REE2NTEwNzE5MEY0NEM2ODc0NkFBMDRDQ0Q3In0.Yuj-KQ9I6A__oFJ-4RFwGUhPjRxML9OCc1bS3C4c3JNVGhrF9IVOZW4Fm6ucCOWWf6Ty0wP5yFKt1pWyEXaYHTxB-wQ7YnidLAlO6AGeKVrDbA1CUXg0y1QfFmkd4cEv1LNYmAkqt7KjCwmaaULZo1coX_nw7PlYbDIz7EEk_l5r0A4GN-UFqZIVzeux888dMmX-nevqceVBeNn2mM5dpjmwu3c46_G62QJuNwa4ENupdpHfnPzd2eWVrmoGX-Ir5PzJJSApwAAd_1pKMHdbZos10pD_bg8IQkvKN2osnIZi4DA9FLht1djKXwLTJ5qDE4GvVvoFyWWiMFxxTHIiyw';
+        // this.accessToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk3OGYxMjUzMGNiMjMzZWVkYTQwOTI1OGNiYzhjNTA3IiwidHlwIjoiYXQrand0In0.eyJpc3MiOiJodHRwczovL2F1dGguY2FyZWVyYnVpbGRlci5jb20iLCJuYmYiOjE3MTc2ODkyNDQsImlhdCI6MTcxNzY4OTI0NCwiZXhwIjoxNzE3NjkxMzQ0LCJzY29wZSI6WyJvcGVuaWQiXSwiYW1yIjpbInB3ZCJdLCJjbGllbnRfaWQiOiJDYTliODhiOTUiLCJjbGllbnRfb3duZXJfaWQiOiJPNDU2ZmVmNGZkNGE3ZjEiLCJjbGllbnRfcmVnaW9uIjoicHJvZHVzIiwic3ViIjoiVTJTODc0NjU3QjU0UTVSWUZDWiIsImF1dGhfdGltZSI6MTcxNzY4MDk4NCwiaWRwIjoibG9jYWwiLCJ1c2VyX3R5cGUiOiJFbXBsb3llckNvbXBhbnkiLCJhY2NvdW50cyI6WyJBNzkwTTU2Nko0SkoyTFFEMzFWIl0sImFjY291bnRkaWQiOiJBNzkwTTU2Nko0SkoyTFFEMzFWIiwic2lkIjoiRkJCNjkwODM0MTZBRTczRjRGRUQ4RjdGMzk5QzZFMjYifQ.BASUGjOmeX_1SHQ2FhtawOw-yhAMaaNz4ZSi0MMOQa96fcuuVdXRjlk67MEqGYsHAQQqG5ajEqgDnuuDY3yuLoSDRpzI6y7CyMBAfUvaPALkJMja6hpQP7pq_leyx2rRhm2eh2xRjzmkl3BMKcOV0VOSTF0gN_NanKV_YBswS3IpS7-76hM6RVAgR5aObwXVawRTfyxyGJKiLgET0Yu7WS0gNc0Y9O1St9trAr4BlZgn_1JsRJv_Y6tzRxHifbaCMkw7XoDofXje8nkf9j2WuW977WLE6yZOFwdJEetqgf1ATz5x9u6TCxiJETn2zPfCVlisO1LlnyqMJz6xRcA_ag';
         this.service.getCBAuthToken().subscribe((x: any) => {
             if (x.code != 460) {
                 this.accessToken = x.access_token;
+
             }
             else {
                 this.messageService.add({ severity: 'warning', summary: 'Server Issue from Career Builder. Please try again later.' });
             }
+            this.loading = false;
+        }, error => {
+            this.loading = false;
+            this.messageService.add({ severity: 'warning', summary: 'Server Issue from Career Builder. Please try again later.' });
+            // Handle error if needed
         });
+
         console.log(this.traineeId);
 
         let migrateCheckReq = {
@@ -320,19 +387,31 @@ export class SearchResumesCBComponent implements OnInit {
     }
 
     public download() {
+        
         if (this.isMigratedProfile) {
-            this.messageService.add({ severity: 'warning', summary: 'Resume Migrated. Get details from Quick View' });
-            return;
-            //let docBlob: any = htmlDocx.asBlob(this.objUrl);
-            //html2pdf().from(this.objUrl).save(this.currentEdgeID + '.pdf');
-            //FileSaver.saveAs(docBlob, this.currentEdgeID + '.docx');
-            /* let req = {
-                userName: this.currentResumeID
-            }
-            this.service.getResumePath(req).subscribe((x: any) => {
-                console.log('x', x)
-                FileSaver.saveAs("https://tresume.us/" + x[0].ResumePath, x[0].ResumeName);
-            }); */
+            // alert('clicked2');
+            // this.messageService.add({ severity: 'warning', summary: 'Resume Migrated. Get details from Quick View' });
+            // return;
+            // let docBlob: any = htmlDocx.asBlob(this.objUrl);
+            // html2pdf().from(this.objUrl).save(this.currentEdgeID + '.pdf');
+            // FileSaver.saveAs(docBlob, this.currentEdgeID + '.docx');
+            //  let req = {
+            //     userName: this.currentResumeID
+            // }
+            // this.service.getResumePath(req).subscribe((x: any) => {
+            //     console.log('x', x)
+            //     FileSaver.saveAs("https://tresume.us/" + x[0].ResumePath, x[0].ResumeName);
+            // }); 
+        const pdfdoc = this.pdfdoc.nativeElement;
+        const pdfOptions = {
+          margin: 10,
+          filename: 'Resume.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        html2pdf().from(pdfdoc).set(pdfOptions).save();
         }
         else {
             let req = {
@@ -343,7 +422,7 @@ export class SearchResumesCBComponent implements OnInit {
             this.loading = true;
             this.service.downloadCBpdf(req).subscribe((x: any) => {
                 console.log('x', x)
-                this.isPDFSrc = (x.ContentType === "application/pdf") ? true : false;
+                // this.isPDFSrc = (x.ContentType === "application/pdf") ? true : false;
                 let b64Data: any = x.Content;
                 this.currentResumeResp = x;
                 this.currentResumeContent = x.Content;
@@ -495,6 +574,21 @@ export class SearchResumesCBComponent implements OnInit {
         if (this.selectedEducationDegree) {
             facetFilter += ' HighestEducationDegreeCode:' + this.selectedEducationDegree.value;
         }
+        if (this.excludeTerms) {
+            facetFilter += ' ExcludeTerms:[' + this.excludeTerms + ']';
+        }
+        if (this.maxSkillsPerProfile) {
+            facetFilter += ' MaxSkillsPerProfile:' + this.maxSkillsPerProfile;
+        }
+        if (this.selectedJobType) {
+            facetFilter += ' DesiredJobType:' + this.selectedJobType.value;
+        }
+        if (this.currentlyEmployed !== undefined) {
+            facetFilter += ' CurrentlyEmployed:' + this.currentlyEmployed;
+        }
+        if (this.description) {
+            facetFilter += ' Description:[' + this.description + ']';
+        }
         return facetFilter;
     }
 
@@ -511,8 +605,36 @@ export class SearchResumesCBComponent implements OnInit {
             }
             this.loading = true;
             this.service.getCBProfileDetails(req).subscribe((profileDetails: any) => {
+                let inputString = this.model.keyword || '';
+              console.log(this.model.keyword);
+              var keywords: any[] = [];
+              if (inputString.trim() !== '') {
+                keywords = inputString.match(/"[^"]+"|\S+/g);
+                if (keywords !== null) {
+                  keywords = keywords
+                    .map((keyword: string) => keyword.replace(/(^"|"$|\(|\))/g, ''))
+                    .filter(
+                      (keyword: string) =>
+                        !['and', 'or', 'not'].includes(keyword.toLowerCase())
+                    );
+                  keywords = keywords.filter(keyword => keyword !== '');
+                  keywords = keywords.map(keyword => keyword.replace(/^"|"$/g, ''));
+                } else {
+                  keywords = [];
+                }
+              }
+
+                console.log(keywords);
                 if (profileDetails) {
                     this.currentEdgeID = params.EdgeID;
+                    this.cfullname = profileDetails.Names[0].First+' '+profileDetails.Names[0].Last;
+                    this.clocation = profileDetails.Locations.CurrentLocations[0].State;
+                    this.cemail = profileDetails.IDs.Email.Identifiers[0].ID?.[0] ?? null;
+                    this.cyearsofExperience = profileDetails.YearsOfExperience ;
+                    this.cjobtitle = profileDetails.JobTitle?? null;
+                    this.ceducation = profileDetails?.Educations;
+                    this.cskill = profileDetails?.Keywords;
+                    
                     //this.download(params);
                     console.log('x', profileDetails)
                     let emailID = profileDetails.IDs.Email.Identifiers[0].ID;
@@ -536,8 +658,21 @@ export class SearchResumesCBComponent implements OnInit {
                         emailID: emailID
                     }
                     this.service.checkIfResumeExists(req1).subscribe((y: any) => {
+                        let resumedata = '';
                         if (y.length > 0) {
-                            this.objUrl = this.sanitizer.bypassSecurityTrustHtml(y[0].HtmlResume);
+
+                            if(y[0].HtmlResume == '' || y[0].HtmlResume == null){
+                                resumedata = 'No resumes found'
+                            }else{
+                                resumedata = y[0].HtmlResume
+                            }
+
+                            this.objUrl = this.highlightSkills(
+                                resumedata,
+                                keywords
+                              );
+                            // this.objUrl = this.sanitizer.bypassSecurityTrustHtml(y[0].HtmlResume);
+
                             this.loading = false;
                             this.fileReady = true;
                             this.visibleSidebar2 = true;
@@ -545,30 +680,54 @@ export class SearchResumesCBComponent implements OnInit {
                         }
                         else {
                             this.isMigratedProfile = false;
+                            let createRequest: CBProfileRequestItem = {
+                                emailID: emailID,
+                                firstName: firstName,
+                                lastName: lastName,
+                                title: title,
+                                currentLocation: CurrentLocation,
+                                yearsOfExpInMonths: YearsOfExpInMonths,
+                                skills: skills,
+                                source: 'CB',
+                                ATSID: ATSID,
+                                traineeId: this.traineeId,
+                                securityclearance:this.hasSecurityClearance ? '1' : '0'
+                            }
                             this.service.getCBResumePreview(req).subscribe((html: any) => {
                                 this.loading = false;
                                 this.fileReady = true;
                                 this.visibleSidebar2 = true;
-                                let createRequest: CBProfileRequestItem = {
-                                    emailID: emailID,
-                                    firstName: firstName,
-                                    lastName: lastName,
-                                    title: title,
-                                    currentLocation: CurrentLocation,
-                                    yearsOfExpInMonths: YearsOfExpInMonths,
-                                    skills: skills,
-                                    htmlResume: html.text,
-                                    source: 'CB',
-                                    ATSID: ATSID,
-                                    traineeId: this.traineeId
+                                
+                                if(html.flag == 1){
+                                    createRequest.htmlResume = html.text
+                                    resumedata = html.text
+                                }else{
+                                    resumedata = "No Resumes Found"
                                 }
+                                
 
                                 if (!this.isPDFSrc) {
-                                    this.objUrl = this.sanitizer.bypassSecurityTrustHtml(html.text);
+                                    // this.objUrl = this.sanitizer.bypassSecurityTrustHtml(html.text);
+                                    this.objUrl = this.highlightSkills(
+                                        resumedata,
+                                        keywords
+                                      );
                                 }
 
                                 this.service.createJobSeekerProfile(createRequest).subscribe(z => {
 
+                                }, error => {
+                                    this.loading = false;
+                                    console.error('Error in createJobSeekerProfile:', error);
+                                    // Handle error if needed
+                                });
+                            }, error => {
+                                this.loading = false;
+                                this.service.createJobSeekerProfile(createRequest).subscribe(z => {
+
+                                }, error => {
+                                    console.error('Error in createJobSeekerProfile:', error);
+                                    // Handle error if needed
                                 });
                             });
                             this.adddivisionaudit();
@@ -582,6 +741,79 @@ export class SearchResumesCBComponent implements OnInit {
         }
     }
 
+    public downloadhtmlPdf(){
+        setTimeout(() => {
+          const options = {
+            margin: [5, 5, 5, 5], // Optional margin settings
+            filename: this.cfullname+'.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+    
+          html2pdf()
+            .from(document.getElementById('printpdf')!)
+            .set(options)
+            .save();
+        });
+      }
+
+      ExportToDoc() {
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title></head><body>";
+      
+        const footer = "</body></html>";
+      
+        const html = header + ' ' + document.getElementById('printpdf')!.innerHTML+' ' + footer;
+      
+        console.log(html);
+        const blob = new Blob(['\ufeff', html], {
+          type: 'application/msword'
+        });
+      
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+      
+        var filename = this.cfullname  ? this.cfullname  + '.doc' : 'document.doc';
+      
+        if ((navigator as any).msSaveOrOpenBlob) {
+          // For Internet Explorer
+          (navigator as any).msSaveOrOpenBlob(blob, filename);
+        } else {
+          // For other browsers
+          const downloadLink = document.createElement('a');
+          downloadLink.href = url;
+          downloadLink.download = filename;
+          downloadLink.style.display = 'none';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+      }
+    highlightSkills(htmlContent: string, skills: string[]): string {
+        skills.forEach((skill) => {
+          // Constructing regex pattern to match all variations of the skill
+          var htmltagslist= ['data','big','center','embed','form','meta','input','select','menu','style','strike','border','disc','type','circle']
+          if (!htmltagslist.includes(skill.toLowerCase())) {
+            const regex = new RegExp(
+              `\\b${skill
+                .split('')
+                .map((c) => `[${c}${c.toUpperCase()}]`)
+                .join('')}+\\b`,
+              'g'
+            );
+            console.log(regex);
+            htmlContent = htmlContent.replace(
+              regex,
+              `<span style="background-color: yellow;font-weight: bold;">$&</span>`
+            );
+          }
+          
+        });
+        return htmlContent;
+      }
+    
+      sanitizeHtml(htmlContent: string): SafeHtml {
+        return this.sanitizer.bypassSecurityTrustHtml(htmlContent);
+      }
 
     public goBack() {
         window.history.back();
@@ -632,7 +864,7 @@ export class SearchResumesCBComponent implements OnInit {
                             console.log(x.result.length);
                             if (x.result.length == 0) {
                                 this.showcrediterror = true;
-                                this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'No division credit found' });
+                                this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'No division credit found' });
                                 reject('No division credit found');
                             } else {
                                 this.creditcount = x.result[0].ucb;
@@ -688,7 +920,7 @@ export class SearchResumesCBComponent implements OnInit {
                             console.log(count);
                             if (count <= 0) {
                                 this.showcrediterror = true;
-                                this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'You dont have enough credit to View Resume' });
+                                this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'You dont have enough credit to View Resume' });
                             }
                             resolve();
                         })
@@ -736,9 +968,9 @@ export class SearchResumesCBComponent implements OnInit {
 
     public nocredits() {
         if(this.showcrediterror){
-            this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'You dont have enough credit to View Resume' });
+            this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'You dont have enough credit to View Resume' });
         }else if(this.cbcrediterror){
-            this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'Cant View Resume due to Careerbuilder Quota Exhausted' });
+            this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'Cant View Resume due to Careerbuilder Quota Exhausted' });
         }
         
     }
@@ -771,5 +1003,6 @@ export interface CBProfileRequestItem {
     source?: string;
     ATSID?: string;
     traineeId?: string | null;
+    securityclearance?:string | null;
 }
 

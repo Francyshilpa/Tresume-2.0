@@ -1,14 +1,64 @@
-.dropdown_display{
+$brand-primary:#482668;
+
+.dropdown_display {
     display: block;
 }
 
-.dropdown_display{
+.dropdown_display {
     display: none;
 }
-.container{
+.container {
     background-color: #fff;
 }
-.main{
-    border-top: 3px solid #46103d;
-    border-bottom: 3px solid #46103d;
+.main {
+    border-top: 3px solid #482668;
+    border-bottom: 3px solid #482668;
+}
+
+.center {
+    text-align: center;
+}
+
+.box-color {
+    background-color: $brand-primary;
+    color: #c2c7d0;
+}
+
+.title-font {
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.card-action-button {
+    background-color: $brand-primary;
+    border-color: $brand-primary;
+}
+.table-responsive {
+    border: 1px solid #dee2e6;
+  }
+  
+  .table-scroll {
+    max-height: 247px; 
+    overflow-y: auto;
+  }
+  .table-scrolls {
+    max-height: 287px; 
+    overflow-y: auto;
+  }
+  
+  .table-scroll table {
+    margin-bottom: 0;
+  }
+.tabledatas{
+    height: 96%;
+}
+.head{
+    background-color: #482668;
+color: white;
+}
+.btn{
+    background-color: #482668;
+     width: 100%;
+     border: none;
+     color: white;
 }

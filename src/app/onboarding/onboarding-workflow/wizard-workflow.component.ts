@@ -33,7 +33,7 @@ function getFormattedDate(date: any) {
     }, OnboardingService, MessageService]
 })
 export class WizardWorkflowComponent implements OnInit {
-
+   loading:boolean = false;
     @ViewChild('stepper') stepper: any;
     @ViewChild('stepper2') stepper2: any;
     @ViewChild('esign') esign: any;
@@ -89,6 +89,7 @@ export class WizardWorkflowComponent implements OnInit {
     orgName: string = '';
     validationReqList = [20, 36, 11, 42, 44];
     fileRoute: string;
+    data: any;
 
     constructor(private route: ActivatedRoute, private service: OnboardingService, private _formBuilder: FormBuilder,
         private appService: AppService, breakpointObserver: BreakpointObserver, private router: Router,
@@ -148,8 +149,11 @@ export class WizardWorkflowComponent implements OnInit {
     ngOnInit(): void {
         this.bsConfig = Object.assign({}, { containerClass: 'theme-default' });
 
-        this.OrgID = this.cookieService.get('OrgID') || 9;
-        this.service.getOnboardingDetails(this.onboardId).subscribe((x: any) => {
+        this.OrgID = this.cookieService.get('OrgID');
+        let req2 = {
+            onboardId:this.onboardId
+        }
+        this.service.getOnboardingDetails(req2).subscribe((x: any) => {
             this.traineeId = x[0].TraineeID;
             if (x[0].Status != 1) {
                 this.typeSelector = false;
@@ -157,16 +161,31 @@ export class WizardWorkflowComponent implements OnInit {
                 this.approvalView = true;
                 this.getOnboardRequests();
             }
-            this.appService.getTraineeDetails(this.traineeId).subscribe((x: any) => {
+            let req = {
+                traineeId:this.traineeId
+            }
+            this.appService.getTraineeDetails(req).subscribe((x: any) => {
                 let response = x.result;
                 if (response) {
                     this.candidateDetails = response[0];
                     this.model.Input = response[0].UserName;
                 }
             });
+            this.service.expirydata(req)
+                .subscribe({
+                next: (response: any) => {
+                    this.data = response.result;
+                },
+                error: (error: any) => {
+                    console.error('Error fetching expiry data:', error);
+                },
+                });
         });
-        this.service.getChecklistNames(this.OrgID).subscribe((x: any) => {
-            this.cards = x;
+        let req={
+            OrgID:this.OrgID 
+        }
+        this.service.getChecklistNames(req).subscribe((x: any) => {
+            this.cards = x.result;
         });
         this.firstFormGroup = this._formBuilder.group({
             firstCtrl: ['', ''],
@@ -180,9 +199,35 @@ export class WizardWorkflowComponent implements OnInit {
             this.orgName = x.result[0].organizationName;
             this.orgLogo = x.result[0].logo;
             console.log(data);
-
         });
+
+        
+        // this.CurrentOnboarding();
     }
+
+    // CurrentOnboarding(){
+    //     const req: any ={
+    //         traineeId:this.traineeId,
+    //     }
+    //     this.service.expirydata(req).subscribe((x:any)=>{
+    //         this.data = x.result;
+    //     })
+    // }
+    CurrentOnboarding() {
+        let traineeId = this.traineeId;
+
+        let req = { traineeId };
+      
+        this.service.expirydata(req)
+          .subscribe({
+            next: (response: any) => {
+              this.data = response.result;
+            },
+            error: (error: any) => {
+              console.error('Error fetching expiry data:', error);
+            },
+          });
+      }
 
     enableStepper(id: any) {
         let requestItem: any = {
@@ -216,35 +261,42 @@ export class WizardWorkflowComponent implements OnInit {
             to: this.model.Input,
             // to: 'wilson@dmsol.in',
             subject: 'Welcome aboard, ' + this.candidateDetails.FirstName,
-            text: `
-            <html>
-            <head>
-              <style>
-                
-                .logo {
-                  width: 100px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="email-container">
-               <center> 
-                ${clientlogo}
-                </center>
-                <div style="width: 100%; text-align: left;">
-                  <p>Hi ${this.candidateDetails.FirstName},</p>
-                  <p>${this.text}</p>
-                  <p>Thanks & Regards</p>
-                  <p>${this.orgName}</p>
-                </div>
-                <center>
-                <p>Powered by<p><br>
-                <img src="https://tresume.us/img_Home/logo_new.png" alt="Tresume Logo" class="logo">
-                </center>
-              </div>
-            </body>
-            </html>
-            `
+            // text: `
+            // <html>
+            // <head>
+            //   <style>
+
+            //     .logo {
+            //       width: 100px;
+            //     }
+            //   </style>
+            // </head>
+            // <body>
+            //   <div class="email-container">
+            //    <center>
+            //     ${clientlogo}
+            //     </center>
+            //     <div style="width: 100%; text-align: left;">
+            //       <p>Hi ${this.candidateDetails.FirstName},</p>
+            //       <p>${this.text}</p>
+            //       <p>Thanks & Regards</p>
+            //       <p>${this.orgName}</p>
+            //     </div>
+            //     <center>
+            //     <p>Powered by<p><br>
+            //     <img src="https://tresume.us/img_Home/logo_new.png" alt="Tresume Logo" class="logo">
+            //     </center>
+            //   </div>
+            // </body>
+            // </html>
+            // `
+            text: `<p style="font-weight: 600; text-align: center; font-size: 18px; margin-top: 20px; color: #333333;">Hello ${this.candidateDetails.FirstName},</p>
+            <p style="font-weight: 600; text-align: center; font-size: 14px; color: #646464">${this.text}</p>
+            
+            <p style="font-weight: 600; text-align: center; font-size: 14px; color: #646464; margin-bottom: 20px;">
+                <p>Thanks & Regards<p>
+                <p>${this.orgName}</p>
+            </p>`
         }
         this.service.emailOfferLetter(requestItem).subscribe(x => {
             this.messageService.add({ severity: 'success', summary: 'Welcome Email Sent', detail: this.model.Input });
@@ -301,6 +353,7 @@ export class WizardWorkflowComponent implements OnInit {
             this.stepperPercentage = (this.stepper2.selectedIndex / (this.stepper2.steps.length - 1)) * 100;
         }
         else {
+            alert("Please Upload a File");
             let requestItem: any = {
                 onboardID: this.onboardId,
                 docTypeName: item.DocTypeName,
@@ -314,18 +367,22 @@ export class WizardWorkflowComponent implements OnInit {
 
             });
         }
-        /* let requestItem: any = {
-            onboardID: this.onboardId,
-            docTypeName: item.DocTypeName,
-            docTypeID: item.DocTypeID,
-            fileName: (this.uploadFile[i] && this.uploadFile[i][0].name) || null,
-            requested: this.requested[i]
+        //  let requestItem: any = {
+        //     onboardID: this.onboardId,
+        //     docTypeName: item.DocTypeName,
+        //     docTypeID: item.DocTypeID,
+        //     fileName: (this.uploadFile[i] && this.uploadFile[i][0].name) || null,
+        //     requested: this.requested[i]
 
-        }
-        this.service.saveOnboardingRequest(requestItem).subscribe(x => {
+        // }
+        // this.service.saveOnboardingRequest(requestItem).subscribe(x => {
 
-        }); */
+        // }); 
 
+    }
+
+    sendeamil(){
+        this.sendEmailonAdhocReq();
     }
 
     afterUploads() {
@@ -349,40 +406,46 @@ export class WizardWorkflowComponent implements OnInit {
                 } else {
                     clientlogo = `<img src='${this.orgLogo}' alt = '${this.orgName}' class='logo'>`;
                 }
-                const url = `https://tresume.us/TresumeNG/onboard/employee/${sessionID}`;
+                const url = `https://tresume.us/onboard/employee/${sessionID}`;
 
                 const emailSubject = 'Onboarding Documents Request';
-                const emailText = `
-              <html>
-              <head>
-                <style>
-                  
-                  .logo {
-                    width: 100px;
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="email-container">
-                <center>
-                ${clientlogo}
-                <center>
-                  <div style="width: 100%; text-align: left;">
-                    <p>Hi Wilson,</p>
-                    <p>Please upload the documents in the link below:</p>
-                    <p><a href="${url}">Access Tresume Link</a></p>
-                    <p><i>Note: The link will be valid for 7 days.</i></p>
-                    <p>Thank you,<br></p>
-                    <p>${this.orgName}</p>
-                  </div>
-                  <center>
-                  <p>Powered by</p><br>
-                  <img src="https://tresume.us/img_Home/logo_new.png" alt="Tresume Logo" class="logo">
-                  <center>
-                </div>
-              </body>
-              </html>
-              `;
+            //     const emailText = `
+            //   <html>
+            //   <head>
+            //     <style>
+
+            //       .logo {
+            //         width: 100px;
+            //       }
+            //     </style>
+            //   </head>
+            //   <body>
+            //     <div class="email-container">
+            //     <center>
+            //     ${clientlogo}
+            //     <center>
+            //       <div style="width: 100%; text-align: left;">
+                    // <p>Hi ${this.candidateDetails.FirstName},</p>
+                    // <p>Please upload the documents in the link below:</p>
+                    // <p><a href="${url}">Access Tresume Link</a></p>
+                    // <p><i>Note: The link will be valid for 7 days.</i></p>
+                    // <p>Thank you,<br></p>
+                    // <p>${this.orgName}</p>
+            //       </div>
+            //       <center>
+            //       <p>Powered by</p><br>
+            //       <img src="https://tresume.us/img_Home/logo_new.png" alt="Tresume Logo" class="logo">
+            //       <center>
+            //     </div>
+            //   </body>
+            //   </html>
+            //   `;
+            const emailText = `<p>Hi ${this.candidateDetails.FirstName},</p>
+            <p>Please upload the documents in the link below:</p>
+            <p><a href="${url}">Access Tresume Link</a></p>
+            <p><i>Note: The link will be valid for 7 days.</i></p>
+            <p>Thank you,<br></p>
+            <p>${this.orgName}</p>`
 
                 const requestItemEmail = {
                     to: this.candidateDetails.UserName,
@@ -404,7 +467,11 @@ export class WizardWorkflowComponent implements OnInit {
     }
 
     save() {
-        this.service.updateOnboardingStatus(this.onboardId).subscribe(x => {
+      this.loading = true;
+      let req = {
+        onboardId: this.onboardId
+      }
+        this.service.updateOnboardingStatus(req).subscribe(x => {
             this.router.navigate(['/onboardingList']);
         })
     }
@@ -415,7 +482,10 @@ export class WizardWorkflowComponent implements OnInit {
     }
 
     getOnboardRequests() {
-        this.service.getOnboardingRequest(this.onboardId).subscribe((x: any) => {
+        let req = {
+            OnboardID:this.onboardId
+        }
+        this.service.getOnboardingRequest(req).subscribe((x: any) => {
             console.log('x', x)
             this.groupedItems = x.reduce((acc: { [key: string]: any[] }, item: any) => {
                 this.additionalChecklistIDs.push(item.AdditionalChecklistID);
@@ -457,10 +527,17 @@ export class WizardWorkflowComponent implements OnInit {
         this.router.navigate(['/onboardingList']);
     }
 
+    // viewDoc(docID: any) {
+    //     this.visibleSidebar2 = true;
+    //     this.fileRoute = `${this.apiUrl}reviewdownload/` + this.onboardId + "/" + docID;
+    //     window.open(fileRoute, '_blank');
+    // }
+
     viewDoc(docID: any) {
-        this.visibleSidebar2 = true;
-        this.fileRoute = `${this.apiUrl}reviewdownload/` + this.onboardId + "/" + docID;
+        const fileRoute: string = `${this.apiUrl}reviewdownload/${this.onboardId}/${docID}`;
+        window.open(fileRoute, '_blank');
     }
+    
 
     download(docID: any) {
         window.location.href = `${this.apiUrl}reviewdownload/` + this.onboardId + "/" + docID
@@ -477,6 +554,7 @@ export class WizardWorkflowComponent implements OnInit {
     }
 
     approveItem(item: any) {
+        this.loading=true;
         let fileNameArr = item.SignedFilepath.split('\\');
         let indexFilename = fileNameArr.length;
         let fileName = fileNameArr[indexFilename - 1];
@@ -500,12 +578,16 @@ export class WizardWorkflowComponent implements OnInit {
             newPath: 'C:/inetpub/vhosts/tresume.us/httpdocs/Content/Resume/' + this.traineeId + '/' + fileName,
         }
         this.service.approveFile(requestItem).subscribe((x: any) => {
+            this.loading=false;
+            this.messageService.add({ severity: 'success', summary: 'File Approved' });
+        },
+        error => {
+          console.error('Error:', error);
+          this.loading = false;
         });
-        setTimeout(() => {
             this.getOnboardRequests();
             this.approveDocItem = {};
             this.modalService.hide();
-        }, 500);
 
     }
 
@@ -523,7 +605,10 @@ export class WizardWorkflowComponent implements OnInit {
     complete() {
         if (this.requestedList && this.requestedList.filter(x => x.Status == 0).length == 0) {
             //this.messageService.add({ severity: 'success', summary: 'Onboarding Complete' });
-            this.service.updateOnboardingStatus1(this.onboardId).subscribe(x => {
+            let req = {
+                onboardId:this.onboardId
+            }
+            this.service.updateOnboardingStatus1(req).subscribe(x => {
                 this.router.navigate(['/onboardingList']);
             })
         }
@@ -542,7 +627,7 @@ export class WizardWorkflowComponent implements OnInit {
         this.service.generateOnboardingsession(requestItem).subscribe((x: any) => {
             if (x) {
                 console.log('x', x)
-                let url = "https://tresume.us/TresumeNG/onboard/employee/" + x[0].SessionID
+                let url = "https://tresume.us/onboard/employee/" + x[0].SessionID
                 let requestItem: any = {
                     //to: 'rohit@tresume.us',
                     to: this.candidateDetails.UserName,
@@ -561,7 +646,7 @@ export class WizardWorkflowComponent implements OnInit {
         this.adhocDocItem.checklistName = checklist[0]?.AdditionalChecklistName;
         this.modalRef = this.modalService.show(template, { class: 'modal-lg' });
         let requestItem: any = {
-            OrgID: this.OrgID || 9,
+            OrgID: this.OrgID,
         }
         this.service.getDocTypes(requestItem).subscribe((x: any) => {
             this.docTypes = x.map((item: any) => {
@@ -623,6 +708,7 @@ export class WizardWorkflowComponent implements OnInit {
 
     }
 
+    
     sendEmailonAdhocReq() {
         let requestItem: any = {
             onboardID: this.onboardId,
@@ -633,7 +719,7 @@ export class WizardWorkflowComponent implements OnInit {
         this.service.generateOnboardingsession(requestItem).subscribe((x: any) => {
             if (x) {
                 console.log('x', x)
-                let url = "https://tresume.us/TresumeNG/onboard/employee/" + x[0].SessionID
+                let url = "https://tresume.us/onboard/employee/" + x[0].SessionID
                 let requestItem: any = {
                     //to: 'rohit@tresume.us',
                     to: this.candidateDetails.UserName,
@@ -651,7 +737,7 @@ export class WizardWorkflowComponent implements OnInit {
         this.adhocDocItem.checklistID = this.onboardId + this.requestedList.length;
         this.modalRef = this.modalService.show(template, { class: 'modal-lg' });
         let requestItem: any = {
-            OrgID: this.OrgID || 9,
+            OrgID: this.OrgID,
         }
         this.service.getDocTypes(requestItem).subscribe((x: any) => {
             this.docTypes = x.map((item: any) => {
@@ -679,7 +765,7 @@ export class WizardWorkflowComponent implements OnInit {
             this.service.generateOnboardingsession(requestItem).subscribe((x: any) => {
                 if (x) {
                     console.log('x', x)
-                    let url = "https://tresume.us/TresumeNG/onboard/employee/" + x[0].SessionID
+                    let url = "https://tresume.us/onboard/employee/" + x[0].SessionID
                     let requestItem: any = {
                         //to: 'rohit@tresume.us',
                         to: this.candidateDetails.UserName,
@@ -739,7 +825,7 @@ export class WizardWorkflowComponent implements OnInit {
         //this.adhocDocItem.checklistID = checklist[0]?.AdditionalChecklistID;
         this.modalRef = this.modalService.show(template, { class: 'modal-lg' });
         let requestItem: any = {
-            OrgID: this.OrgID || 9,
+            OrgID: this.OrgID,
         }
         this.service.getDocTypes(requestItem).subscribe((x: any) => {
             this.docTypes = x.map((item: any) => {
@@ -777,7 +863,7 @@ export class WizardWorkflowComponent implements OnInit {
 
                     this.service.savefilepath(requestItem).subscribe(x => {
                         this.modalService.hide();
-                        
+
                         this.adhocDocItem = {};
                         this.adhocUploadFile = {};
                     });

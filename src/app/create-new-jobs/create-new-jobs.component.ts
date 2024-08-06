@@ -1,29 +1,147 @@
-import { Component } from '@angular/core';
 import { ViewChild } from '@angular/core';
 import { TabsetComponent } from 'ngx-bootstrap/tabs';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CreateNewJobsService } from './create-new-jobs.service';
+import { CookieService } from 'ngx-cookie-service';
+import { MessageService } from 'primeng/api';
+
 
 @Component({
   selector: 'app-create-new-jobs',
   templateUrl: './create-new-jobs.component.html',
-  styleUrls: ['./create-new-jobs.component.scss']
+  styleUrls: ['./create-new-jobs.component.scss'],
+  providers: [CookieService, MessageService , CreateNewJobsService],
 })
+
+
 export class CreateNewJobsComponent{
   
+  
   @ViewChild('myTabs') myTabs: TabsetComponent;
+  loading:boolean = false;
   basicactive:string='active';
   reqactive:string = '';
   orginfoactive = '';
   previewinfo = '';
   address:string='';
-  selectedLegalstatus:string = '';
-
+  selectedLegalstatus:any ;
+  jobcode:string;
   companyname:string='';
   jobtitle:string='';
   zipcode:string='';
   citycode:string='';
-  billrate:string='';
-  payrate:string='';
+  billrate:string='0';
+  payrate:string='0';
+  basicInfo: any;
+  reqInfo: any;
+  orgInfo: any;
+  selectedstate:any=0;
+  OrgID: string;
+  routeType: any;
+  TraineeID: any;
+  numberOfPositions:any;
+  city: string[] = [];  
+  filteredOwnership: any[] = [];
+  selectedStatus: any[] = [];
+  // statusOptions: any[]=[{name:'Eligible to work in the US',value:'ANY'},{name:'US Citizen'}, {name:'GC'}, {name:'F1'}, {name:'F1-CPT'},{name:'F1-OPT EAD'},{name:'GC-EAD'},{name:'H4-EAD'},{name:'L2-EAD'},{name:'Other EAD'},{name:'L1-Visa'},];
+  statusOptions:any[];
+  selectedCountry: any = 'US'; 
+  countries: string[] = ['United States,'];
+
+  selectedState: string = ''; 
+  state: string[] 
+
+  selectedCity: string;
+  cities: string[];
+
+
+  selectedCurrency: string = '1'; 
+  selectedcCurrency: string = '1'; 
+  
+  currencies: string[] = [];
+
+  selectedPayType: string = '1';
+  selectedcPayType: string = '1';
+  payTypes: string[] = ['hour', 'day', 'week', 'bi-week', 'month', 'year'];
+
+
+  selectedTaxTerms: string = '1';
+  selectedcTaxTerms: string = '1';
+  taxTerms: any[];
+  internaltaxterms:string='';
+  selectedRespondBy: Date; 
+  selectedJobType: string = '1'; 
+  jobTypeOptions: any[];
+  selectedPriority: string = '3';
+  priorityOptions: any[];
+  selectedJobStatus: any = '';
+  jobStatusOptions: any[];  
+  selectedClient: string = ''; 
+  endclient:string='';
+  clientjobid:string='';
+  duration:string='';
+  clientOptions: any[];
+  skills:string = '';
+  selectedInterviewMode: string = '';
+  interviewModeOptions: any[] = [
+    { value: '', label: 'Select' },
+    { value: 'F2F', label: 'Face to Face' },
+    { value: 'Phone', label: 'Phone' },
+    { value: 'Zoom', label: 'Zoom' },
+    { value: 'Goole', label: 'Google Meet' },
+    { value: 'WebEx', label: 'WebEx' },
+    { value: 'Zoom', label: 'Zoom' },
+    { value: 'Other', label: 'Other' }
+  ];
+  selectedExperience: number=0; 
+  public content:any;
+   selectedTaxTerm: any;
+  selectedDepartment: any;
+
+  selectedrecmanger: any;
+  selectedsalesManager: any;
+
+  selectedaccountManager: any;
+
+  checkboxes = [
+    { label: 'ZipRecruiter', checked: false },
+    { label: 'Dice', checked: false }
+  ];
+  securityClearance:string = '0';
+  selectedPrimaryRecruiter: string = '';
+  RecruiterStatusOptionsons: any[];
+  admins:any[];
+  JobDescription:string = '';
+  comments:string = '';
+  recruitmentmanager:string = '';
+  accountsmanager:string='';
+  salesmanager:string='';
+  Legalstatus: any;
+  username: any;
+  jobbaordaccount: any = [];
+  selectedJobboardaccount: any[]=[];
+  constructor(
+    private formBuilder: FormBuilder,
+    private router: Router,
+    private cookieService: CookieService,
+    private messageService: MessageService,
+    private route: ActivatedRoute,
+    private service: CreateNewJobsService,
+  ) {
+    
+   
+  }
+
+ngOnInit(): void{
+this.loading = true;
+  this.OrgID = this.cookieService.get('OrgID');
+  this.TraineeID = this.cookieService.get('TraineeID');
+  this.username = this.cookieService.get('userName1');
+  this.routeType = this.route.snapshot.params["routeType"];
+  this.getJobPostData();
+  }
 
   nextTab(tab:number) {
     if(tab == 1){
@@ -49,177 +167,179 @@ export class CreateNewJobsComponent{
     } 
   console.log(this.selectedLegalstatus);
   }
-
-
-
-
-  filteredOwnership: any[] = [];
-  selectedStatus: any[] = [];
-  statusOptions: any[]=[{name:'Eligible to work in the US'},{name:'US Citizen'}, {name:'GC'}, {name:'F1'}, {name:'F1-CPT'},{name:'F1-OPT EAD'},{name:'GC-EAD'},{name:'H4-EAD'},{name:'L2-EAD'},{name:'Other EAD'},{name:'L1-Visa'},];
-  onLegalstatusSearch(event: any) {
-    this.filteredOwnership = this.statusOptions.filter(option =>
-      option.toLowerCase().includes(event.query.toLowerCase())
-    );
+  onChange(event: { value: any }) {
+    console.log(event.value);
+    this.selectedLegalstatus = event.value;
   }
- 
 
+  onJobStatusChange(selectedValue: any) {
+    // Find the corresponding object in jobStatusOptions array
+    const selectedOption = this.jobStatusOptions.find(option => option.Value === selectedValue);
   
-  selectedCountry: string = 'United States'; 
-  countries: string[] = ['United States'];
-
-  selectedState: string = 'Georgia'; 
-  states: string[] = ['Georgia', 'District of Columbia', 'Florida', 'Hawaii', 'Idaho', 'Other'];
-
-  selectedCity: string = 'New York';
-  cities: string[] = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'Other'];
-
-
-selectedCurrency: string = 'USD'; 
-  currencies: string[] = ['USD', 'EUR', 'INR', 'Other'];
-
-  selectedPayType: string = 'hour';
-  payTypes: string[] = ['hour', 'day', 'week', 'bi-week', 'month', 'year'];
-
-
-  selectedTaxTerms: string = '';
-  taxTerms: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: '1099' },
-    { value: '2', label: 'C2C' },
-    { value: '3', label: 'C2H' },
-    { value: '4', label: 'Full Time' },
-    { value: '5', label: 'Intern' },
-    { value: '6', label: 'Other' },
-    { value: '7', label: 'Part Time' },
-    { value: '8', label: 'Seasonal' },
-    { value: '9', label: 'W-2' },
-  ];
-
-  selectedRespondBy: string = '1'; 
-  respondByOptions: any[] = [
-    { value: '1', label: 'Open until filled' },
-    { value: '2', label: 'Specific Date' }
-  ];
-
-
-  selectedJobType: string = ''; 
-  jobTypeOptions: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: 'Full Time' },
-    { value: '2', label: 'Contract' },
-    { value: '3', label: 'Part Time' }
-  ];
-
-  selectedPriority: string = '';
-  priorityOptions: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: 'Critical' },
-    { value: '2', label: 'High' },
-    { value: '3', label: 'Low' },
-    { value: '4', label: 'Medium' }
-  ];
-
-  selectedJobStatus: string = '';
-  jobStatusOptions: any[] = [
-    { value: '0', label: 'Select' },
-    { value: '1', label: 'Open' },
-    { value: '2', label: 'Cancelled' },
-    { value: '3', label: 'Closed' },
-    { value: '4', label: 'Filled' },
-    { value: '5', label: 'On Hold by Client' },
-    { value: '6', label: 'On Hold by Lead' }
-  ];
-
+    // Set the selectedJobStatus to the whole object or just the Value based on your requirements
+    this.selectedJobStatus = selectedOption; // or selectedOption.Value if you just want the value
   
-  selectedClient: string = ''; 
-  clientOptions: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: 'FX Pro' },
-    { value: '2', label: 'ds' },
-    { value: '3', label: 'Google edit' },
-    { value: '4', label: 'Mozila' }
-  ];
-
-  selectedInterviewMode: string = '';
-  interviewModeOptions: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: 'Face to Face' },
-    { value: '2', label: 'Phone' },
-    { value: '3', label: 'Zoom' },
-    { value: '4', label: 'Hangouts' },
-    { value: '5', label: 'WebEx' }
-  ];
-
-
+    // Log the selected value
+    console.log(selectedOption.Value);
+  }
   
-  selectedExperience: string = ''; 
-  experienceOptions: string[] = [
-    '1 year',
-    '2 years',
-    '3 years',
-    '4 years',
-    '5 years',
-    '6 years',
-    '7 years',
-    '8 years',
-    '9 years'
-  ];
+   
 
 
-  public content:any;
-  taxTermsOptions = [
-    { id: 1, name: 'Option 1' },
-    { id: 2, name: 'Option 2' },
-    { id: 3, name: 'Option 3' }
-  ];
-  selectedTaxTerm: any;
 
-  departmentOptions = [
-    { id: 1, name: 'Department A' },
-    { id: 2, name: 'Department B' },
-    { id: 3, name: 'Department C' }
-  ];
-  selectedDepartment: any;
 
-  recruitManager = [
-    { id: 1, name: 'Department A' },
-    { id: 2, name: 'Department B' },
-    { id: 3, name: 'Department C' }
-  ];
-  selectedrecmanger: any;
+getCity() {
+  console.log(this.selectedstate);
+  let Req = {
+    TraineeID: this.TraineeID,
+    State: this.selectedstate
+  };
+  this.service.getCity(Req).subscribe((x: any) => {
+    this.cities = x.result;
+  });
+  }
 
-  salesManager = [
-    { id: 1, name: 'Department A' },
-    { id: 2, name: 'Department B' },
-    { id: 3, name: 'Department C' }
-  ];
-  selectedsalesManager: any;
 
-  accountManager = [
-    { id: 1, name: 'Department A' },
-    { id: 2, name: 'Department B' },
-    { id: 3, name: 'Department C' }
-  ];
-  selectedaccountManager: any;
+  getJobPostData(){
+    let Req = {
+      TraineeID: this.TraineeID,
+      OrgID: this.OrgID
+    };
+    this.service.getJobPostData(Req).subscribe((x: any) => {
+      this.loading = false;
+      this.jobcode = x.NextJobId;
+      this.state = x.states
+      this.currencies = x.currencyTypes;
+      this.payTypes = x.payTypes;
+      this.taxTerms = x.taxTerms;
+      this.jobTypeOptions = x.jobTypes;
+      this.priorityOptions = x.priorities;
+      this.jobStatusOptions = x.jobStatuses;
+      this.clientOptions = x.clients;
+      this.statusOptions = x.legalstatus;
+      this.RecruiterStatusOptionsons = x.recruiters;
+      this.admins = x.admins;
+      this.jobbaordaccount = x.jobbaordaccount
 
-  checkboxes = [
-    { label: 'ZipRecruiter', checked: false },
-    { label: 'Dice', checked: false }
-  ];
+      for(var i=0;i<this.jobbaordaccount.length;i++){
+        this.JobboardSelection(this.jobbaordaccount[i]);
+      }
 
-  selectedPrimaryRecruiter: string = '';
- RecruiterStatusOptionsons: any[] = [
-    { value: '', label: 'Select' },
-    { value: '1', label: 'PORKODI BASKARAN' },
-    { value: '2', label: 'PORKODI B' },
-    { value: '3', label: 'RENUKA Aed' },
-    { value: '4', label: 'WILSON AM' },
-    { value: '5', label: 'TEST1' },
-    { value: '6', label: 'TEST V2' }
-  ];
+      console.log(x)
+    }),(error: any) => {
+      // Error callback
+      console.error('Error occurred:', error);
+      // Handle error here
+      this.loading = false; // Set loading to false on error
+    };
+  }
 
+  PostJob(type:any){
+    this.loading = true;
+    if (this.selectedLegalstatus && this.selectedLegalstatus.length > 0) {
+      this.Legalstatus = this.selectedLegalstatus.map((item: { value: any; }) => item.value).join(',');
+    }else{
+      this.Legalstatus = '';
+    }
+    console.log( this.internaltaxterms);
+    console.log( this.selectedPrimaryRecruiter);
+    console.log( this.jobtitle);
+    console.log( this.selectedstate);
+    console.log( this.selectedRespondBy);
+    if (
+      this.selectedPrimaryRecruiter &&
+      this.jobtitle &&
+      this.selectedstate &&
+      this.selectedCity &&
+      this.selectedRespondBy &&
+      this.numberOfPositions &&
+      this.internaltaxterms
+      ) {
+        let Req = {
+          RecruiterID: this.selectedPrimaryRecruiter,
+          OrgID: this.OrgID,
+          JobTitle: this.jobtitle,
+          Company: this.companyname,
+          City: this.selectedCity,
+          State: this.selectedState,
+          Country: this.selectedCountry,
+          ZipCode: this.zipcode,
+          Address: this.address,
+          AreaCode: this.citycode,
+          JobDescription: this.JobDescription,
+          JobCode: this.jobcode,
+          Skills: this.skills,
+          PayRate: this.payrate,
+          PayRateTypeID: this.selectedPayType,
+          PayRateCurrencyTypeID: this.selectedCurrency,
+          PayRateTaxTermID: this.selectedTaxTerms,
+          BillRate: this.billrate,
+          BillRateTypeID: this.selectedcPayType,
+          BillRateCurrencyTypeID: this.selectedcCurrency,
+          BillRateTaxTermID: this.selectedcTaxTerms,
+          JobTypeID: this.selectedJobType,
+          LegalStatus: this.Legalstatus,
+          JobStausID: this.selectedJobStatus.JobStatusID,
+          NoOfPosition: this.numberOfPositions,
+          RespondDate: this.selectedRespondBy,
+          ClientID: this.selectedClient,
+          EndClient: this.endclient,
+          ClientJobID: this.clientjobid,
+          PriorityID: this.selectedPriority,
+          Duration: this.duration,
+          InterviewMode: this.selectedInterviewMode,
+          SecruityClearance: this.securityClearance,
+          PrimaryRecruiterID: this.selectedPrimaryRecruiter,
+          RecruitmentManagerID: this.recruitmentmanager,
+          SalesManagerID: this.salesmanager,
+          AccountManagerID: this.accountsmanager,
+          TaxTermID: this.internaltaxterms,
+          Comments: this.comments,
+          Active: type,
+          CreateBy: this.username,
+          LastUpdateBy: this.username,
+          MinYearsOfExpInMonths: this.selectedExperience * 12,
+          JobStatus: this.selectedJobStatus.Value,
+          jobboardaccount:this.selectedJobboardaccount
+      };
   
+      console.log(Req);
+      this.service.PostJob(Req).subscribe(
+          (x: any) => {
+            this.loading = false;
+              this.messageService.add({ severity: 'success', summary: 'Job Posted Successfully' });
+              this.router.navigate(['/jobpostings']);
+          },
+          (error: any) => {
+            
+              // Error callback
+              this.messageService.add({ severity: 'danger', summary: 'Job Not Posted. Please Try Again' });
+              console.error('Error occurred:', error);
+              // Handle error here
+              this.loading = false; // Set loading to false on error
+          }
+      );
+  } else {
+      alert('Please Enter all Mandatory Fields');
+      this.loading = false;
+  }
+  
+  }
 
+  JobboardSelection(data:any){
+    
 
+    if(data.Active){
+      this.selectedJobboardaccount.push(data)
+    }else{
+      const index = this.selectedJobboardaccount.indexOf(data);
+      if (index !== -1) {
+        this.selectedJobboardaccount.splice(index, 1);
+      }
+    }
+    console.log(this.selectedJobboardaccount);
 
-}
+  }
+
+  }
+

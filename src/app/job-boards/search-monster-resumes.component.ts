@@ -13,7 +13,7 @@ import * as FileSaver from 'file-saver';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgxExtendedPdfViewerService, TextLayerRenderedEvent } from 'ngx-extended-pdf-viewer';
-
+import * as html2pdf from 'html2pdf.js';
 
 const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
     const byteCharacters = atob(b64Data);
@@ -134,7 +134,21 @@ export class SearchResumesMonsterComponent implements OnInit {
         'Washington DC',
         'West Virginia',
         'Wisconsin',
-        'Wyoming'
+        'Wyoming',
+        //canada
+        'Ontario',
+        'Alberta',
+        'British Columbia',
+        'Manitoba',
+        'New Brunswick',
+        'Newfoundland and Labrador',
+        'Nova Scotia',
+        'Prince Edward Island',
+        'Quebec',
+        'Saskatchewan',
+        'Northwest Territories',
+        'Nunavut',
+        'Yukon'
     ];
 
     workStatus: any[] = [
@@ -154,6 +168,53 @@ export class SearchResumesMonsterComponent implements OnInit {
 
     ];
 
+    selectedRelocate: any; 
+    selectedTravelOption: any;
+      selectedJobTypes: string[] = []; 
+    
+    relocateOptions = [
+      { value: true, label: 'Yes' },
+      { value: false, label: 'No' }
+    ];
+    veteranOptions = [
+        { value: true, label: 'Yes' },
+        { value: false, label: 'No' }
+      ];
+    
+    travelOptions = [
+        { value: 'NoTravelRequired', label: 'No Travel Required' },
+        { value: 'UpTo25PercentTravel', label: 'Up to 25% Travel' },
+        { value: 'UpTo50PercentTravel', label: 'Up to 50% Travel' },
+        { value: 'UpTo75PercentTravel', label: 'Up to 75% Travel' },
+        { value: 'OneHundredPercentTravel', label: '100% Travel' }
+      ];
+    
+  careerLevels = [
+    { value: 'President', label: 'President' },
+    { value: 'ExecutiveLevel', label: 'Executive Level' },
+    { value: 'GeneralManager', label: 'General Manager' },
+    { value: 'VicePresident', label: 'Vice President' },
+    { value: 'Director', label: 'Director' },
+    { value: 'Head', label: 'Head' },
+    { value: 'Manager', label: 'Manager' },
+    { value: 'Lead', label: 'Lead' },
+    { value: 'Other', label: 'Other' },
+    { value: 'Analyst', label: 'Analyst' },
+    { value: 'Representative', label: 'Representative' },
+    { value: 'Specialist', label: 'Specialist' },
+    { value: 'Clerk', label: 'Clerk' },
+    { value: 'Coordinator', label: 'Coordinator' },
+    { value: 'Assistant', label: 'Assistant' }
+  ];
+
+  jobTypeOptions = [
+    { label: 'Wants Permanent', value: 'WantsPermanent' },
+    { label: 'Wants Contract', value: 'WantsContract' },
+    { label: 'Wants Intern', value: 'WantsIntern' },
+    { label: 'Wants Temp', value: 'WantsTemp' },
+    { label: 'Wants Seasonal', value: 'WantsSeasonal' }
+  ];
+
     securityClearances: any[] = [
         { value: 2, name: 'Unspecified' },
         { value: 3, name: 'Active Confidential' },
@@ -164,9 +225,32 @@ export class SearchResumesMonsterComponent implements OnInit {
         { value: 20, name: 'Active TS/SCI-FS Polygraph' },
         { value: 21, name: 'Other Active Clearance' }
     ];
-
+    languageProficiencies = [
+        { value: 'Unknown', label: 'Unknown' },
+        { value: 'Beginner', label: 'Beginner' },
+        { value: 'Intermediate', label: 'Intermediate' },
+        { value: 'Advanced', label: 'Advanced' },
+        { value: 'Fluent', label: 'Fluent' }
+    ];
+    workStatuses = [
+        { value: 'AuthorizedToWorkForAnyEmployer', label: 'Authorized to Work for Any Employer' },
+        { value: 'AuthorizedToWorkForPresentEmployer', label: 'Authorized to Work for Present Employer' },
+        { value: 'RequireSponsorship', label: 'Require Sponsorship' }
+    ];
+    jobTypes = [
+        { value: 'WantsPermanent', label: 'Permanent' },
+        { value: 'WantsContract', label: 'Contract' },
+        { value: 'WantsIntern', label: 'Intern' },
+        { value: 'WantsTemp', label: 'Temporary' },
+        { value: 'WantsSeasonal', label: 'Seasonal' }
+    ];
+    selectedJobType: string;
+    selectedWorkStatus: string;
+    selectedLanguageProficiency: string;
     rowData: any;
     columnDefs: any;
+    minSalary: number;
+    maxSalary: number;
     public gridOptions: GridOptions = {};
     public gridApi: GridApi;
     public selectedState: string;
@@ -188,6 +272,7 @@ export class SearchResumesMonsterComponent implements OnInit {
     hasSecurityClearance: boolean;
     selectedWorkstatus: any[] = [];
     selectedEducationDegree: any;
+    selectedCareerLevel: any;
     selectedSecurityClearance: any;
     searchType: SearchType = SearchType.jobDetail;
     fileBlob: any;
@@ -223,10 +308,30 @@ export class SearchResumesMonsterComponent implements OnInit {
     isallowed: any = true;
     divcandidateemail: any = '';
     availablecredits:any = 0;
+    dailycredits:any;
+    Htmlresumetopdf: any;
+    cfullname: string;
+    clocation: any;
+    cyearsofExperience: string;
+    cemail: any;
+    cphone: any;
+    cjobtitle: any;
+    cskill: any;
+    migratedResumeID: any;
+    cworkpermit: string;
+    csocialsource: string;
+    ceducation: string;
+    JobTitle:string;
+    lastActiveMaximumAge: number | undefined;
+    maxTimeLastActive: number | undefined;
+    resumeUpdatedMaximumAge: number | undefined;
+    maxTimeResumeUpdated: any;
+    resumeUpdatedMinimumAge: any;
+    minTimeResumeUpdated: any;
 
     constructor(private route: ActivatedRoute, private service: JobBoardsService, private cookieService: CookieService,
         private messageService: MessageService, private sanitizer: DomSanitizer, private pdfViewerService: NgxExtendedPdfViewerService) {
-        this.traineeId = sessionStorage.getItem("TraineeID");
+        this.traineeId = this.cookieService.get('TraineeID');
         // this.traineeId = this.cookieService.get('TraineeID')
     }
 
@@ -309,62 +414,121 @@ export class SearchResumesMonsterComponent implements OnInit {
     }
 
     private download(params: any) {
-        console.log(params);
-        let req = {
-            resumeID: params.textResumeID,
-            token: this.accessToken
+        let inputString;
+        if(this.searchType ==2){
+          inputString = this.model.boolean || '';
+        }else{
+          inputString = this.model.keyword || '';
         }
-        this.loading = true;
-        this.service.getMonsterCandidateDetails(req).subscribe((x: any) => {
-            this.loading = false;
-            if (x.status == "fail") {
-                this.messageService.add({ severity: 'warning', summary: 'No Resume Found' });
-                return;
-            }
-            let profileDetails = x;
-            let emailID = profileDetails.identity.emailAddress;
-            this.divcandidateemail = profileDetails.identity.emailAddress;
-            let name = profileDetails.identity.name.split(" ");
-            let firstName = name[0];
-            let lastName = name[1];
-            let title = profileDetails.targetJobTitle;
-            let CurrentLocation = profileDetails.location.state;
-            let YearsOfExpInMonths = (profileDetails.yearsOfExperience * 12).toString();
-            let skilllist: any = profileDetails.relevance.skills;
-            let skills: any = [];
-            skilllist.forEach((itm: any) => {
-                skills.push(itm.name);
-            });
-            let HtmlResume = profileDetails.resume;
-            let source = "Monster";
-            let ATSID = params.textResumeID;
-            this.currentResumeID = emailID;
-            let req1: MonsterProfileRequestItem = {
-                emailID: emailID
-            }
-            this.service.checkIfResumeExists(req1).subscribe((y: any) => {
-                if (y.length > 0) {
-                    this.objUrl = this.sanitizer.bypassSecurityTrustHtml(y[0].HtmlResume);
-                    this.loading = false;
-                    this.isPDFSrc = false;
-                    this.fileReady = true;
-                    this.visibleSidebar2 = true;
-                    this.isMigratedProfile = true;
+        console.log(this.model.boolean);
+        var keywords: any[] = [];
+        if (inputString.trim() !== '') {
+          keywords = inputString.match(/"[^"]+"|\S+/g);
+          if (keywords !== null) {
+            keywords = keywords
+              .map((keyword: string) => keyword.replace(/(^"|"$|\(|\))/g, ''))
+              .filter(
+                (keyword: string) =>
+                  !['and', 'or', 'not'].includes(keyword.toLowerCase())
+              );
+            keywords = keywords.filter((keyword) => keyword !== '');
+            keywords = keywords.map((keyword) => keyword.replace(/^"|"$/g, ''));
+          } else {
+            keywords = [];
+          }
+        }
+
+        console.log(keywords);
+        let req1 = {
+            md5emailID: params.textResumeID
+        };
+        this.service.checkmd5resume(req1).subscribe((y: any) => {
+            let resumedata = '';
+            if (y.length > 0) {
+                this.isPDFSrc = false;
+                if(y[0].HtmlResume == '' || y[0].HtmlResume == null){
+                    resumedata = 'No resumes found'
+                }else{
+                    resumedata = y[0].HtmlResume
                 }
-                else {
+                this.objUrl = this.highlightSkills(resumedata, keywords);
+                this.Htmlresumetopdf = y[0].HtmlResume;
+                this.loading = false;
+                this.fileReady = true;
+                this.visibleSidebar2 = true;
+                this.cfullname = (y[0].FirstName ?? '') + ' ' + (y[0].LastName ?? '');
+                this.clocation = y[0].CurrentLocation ?? '';
+                this.cyearsofExperience = ((y[0].YearsOfExpInMonths ?? 0) / 12).toString();
+                this.cemail = y[0].UserName ?? '';
+                this.cphone = y[0].PhoneNumber ?? '';
+                this.cjobtitle = y[0].Title ?? '';
+                const skillsString = y[0].Skill || '';
+                const skillsArray = skillsString.split(',');
+                const skillsObject = skillsArray.map((skill: any) => ({ skill }));
+                console.log(skillsObject);
+                this.cskill = skillsObject;
+                this.migratedResumeID = y[0].UserName ?? '';
+            } else {
+                let req2 = {
+                    resumeID: params.textResumeID,
+                    token: this.accessToken
+                };
+                this.loading = true;
+                this.service.getMonsterCandidateDetails(req2).subscribe((x: any) => {
+                    this.loading = false;
+                    if (x.status == 'fail') {
+                        this.messageService.add({ severity: 'warning', summary: 'No Resume Found' });
+                        return;
+                    }
+                    let profileDetails = x;
+                    let emailID = profileDetails.identity.emailAddress;
+                    this.divcandidateemail = emailID;
+                    let name = profileDetails.identity.name.split(' ');
+                    let firstName = name[0];
+                    let lastName = name[1] || '';
+                    let title = profileDetails.targetJobTitle;
+                    let CurrentLocation = profileDetails.location.state || '';
+                    let YearsOfExpInMonths = (profileDetails.yearsOfExperience * 12).toString();
+                    let skilllist: any[] = profileDetails.relevance.skills || [];
+                    let skills: string[] = [];
+                    skilllist.forEach((itm: any) => {
+                        skills.push(itm.name);
+                    });
+                    let HtmlResume = profileDetails.resume;
+                    let source = 'Monster';
+                    let ATSID = params.textResumeID;
+    
+                    this.cfullname = firstName + ' ' + lastName;
+                    this.clocation = CurrentLocation;
+                    this.cphone = '';
+                    this.cemail = emailID;
+                    this.cworkpermit = '';
+                    this.cyearsofExperience = profileDetails.yearsOfExperience;
+                    this.cjobtitle = title;
+                    this.csocialsource = '';
+                    this.ceducation = '';
+                    this.cskill = skills;
+    
                     let b64Data: any = x.resumeDocument.file;
                     this.fileBlob = b64Data;
-                    let contentType = x.resumeDocument.fileContentType;
-                    this.isPDFSrc = (contentType === "application/pdf") ? true : false;
+                    let contentType = x.resumeDocument.fileContentType;6
+                    // this.isPDFSrc = contentType === 'application/pdf';
                     this.currentResumeResp = x.resumeDocument;
                     const blob = b64toBlob(b64Data, contentType);
                     if (!this.isPDFSrc) {
-                        this.objUrl = this.sanitizer.bypassSecurityTrustHtml(x.resume);
+                        var urldata = x.resume;
+                        this.objUrl = this.highlightSkills(urldata, keywords);
                         /* const re = new RegExp(`\\b${this.model.boolean}\\b`, 'gi');
                         this.objUrl = x.resume.replace(re, `<mark>${this.model.boolean}</mark>`); */
                     }
                     this.fileReady = true;
                     this.visibleSidebar2 = true;
+                    let securityclearance = '0'
+                    if (this.selectedSecurityClearance && this.selectedSecurityClearance.value != 2) {
+                        securityclearance = '1';
+                      } else {
+                        securityclearance = '0';
+                      }
                     let createRequest: MonsterProfileRequestItem = {
                         emailID: emailID,
                         firstName: firstName,
@@ -376,29 +540,89 @@ export class SearchResumesMonsterComponent implements OnInit {
                         htmlResume: HtmlResume,
                         source: source,
                         ATSID: ATSID,
-                        traineeId: this.traineeId
-                    }
+                        traineeId: this.traineeId,
+                        securityclearance:securityclearance
+                    };
                     this.service.createJobSeekerProfile(createRequest).subscribe(z => {
-                        console.log('z', z)
+                        console.log('z', z);
                         let saveResumeReq = {
                             Filename: x.resumeDocument.fileName,
                             Content: this.fileBlob,
                             userName: this.traineeId,
                             emailID: emailID
-                        }
-                        this.service.saveResume(saveResumeReq).subscribe(x => {
-
+                        };
+                        this.service.saveResume(saveResumeReq).subscribe(() => {
+                            // Handle success if needed
                         });
-
                     });
                     this.adddivisionaudit();
-
-                }
-            });
+                }, error => {
+                    this.loading = false;
+                    console.error('Error in createJobSeekerProfile:', error);
+                    // Handle error if needed
+                });
+            }
         });
-
-
     }
+    highlightSkills(htmlContent: string, skills: string[]): string {
+        skills.forEach((skill) => {
+          // Constructing regex pattern to match all variations of the skill
+          var htmltagslist = [
+            'data',
+            'big',
+            'center',
+            'embed',
+            'form',
+            'meta',
+            'input',
+            'select',
+            'menu',
+            'style',
+            'strike',
+            'border',
+            'disc',
+            'type',
+            'circle',
+          ];
+          if (!htmltagslist.includes(skill.toLowerCase())) {
+            const regex = new RegExp(
+              `\\b${skill
+                .split('')
+                .map((c) => `[${c}${c.toUpperCase()}]`)
+                .join('')}+\\b`,
+              'g'
+            );
+            console.log(regex);
+            htmlContent = htmlContent.replace(
+              regex,
+              `<span style="background-color: yellow;font-weight: bold;">$&</span>`
+            );
+          }
+        });
+        return htmlContent;
+      }
+    
+      sanitizeHtml(htmlContent: string): SafeHtml {
+        return this.sanitizer.bypassSecurityTrustHtml(htmlContent);
+      }
+    
+      public downloadhtmlPdf(){
+        setTimeout(() => {
+          const options = {
+            margin: [5, 5, 5, 5], // Optional margin settings
+            filename: this.cfullname+'.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+    
+          html2pdf()
+            .from(document.getElementById('printpdf')!)
+            .set(options)
+            .save();
+        });
+      }
+    
 
     public downloadDoc() {
         if (this.isMigratedProfile) {
@@ -492,6 +716,7 @@ export class SearchResumesMonsterComponent implements OnInit {
                 country: 'US',
                 searchType: 'semantic',
                 semantic: {
+                    jobTitles :[this.JobTitle],
                     booleanExpression: {
                         expression: this.model.boolean,
                         importance: 'Required'
@@ -504,7 +729,13 @@ export class SearchResumesMonsterComponent implements OnInit {
                     ],
 
                     resumeUpdatedMaximumAge: this.daysWithin * 1440,
-                    willingnessToRelocate: this.willingToRelocate
+                    Activemaxage:this.lastActiveMaximumAge,
+                    Lasttimeactive:this.maxTimeLastActive,
+                    Resumeupdatedmaxage:this.resumeUpdatedMaximumAge,
+                    Maxtimeresumeupdated:this.maxTimeResumeUpdated,
+                    Resumeupdatedminage:this.resumeUpdatedMinimumAge,
+                    Mintimeresumeupdated:this.minTimeResumeUpdated,
+                    willingnessToRelocate: this.willingToRelocate,
 
                 }
             };
@@ -541,10 +772,29 @@ export class SearchResumesMonsterComponent implements OnInit {
                     importance: 'Required'
                 }]
             }
+            
             if (this.selectedSecurityClearance?.value) {
                 objectReq.semantic.securityClearances = [{
                     clearanceId: this.selectedSecurityClearance.value,
                     countryAbbrev: 'US'
+                }]
+            }
+            if (this.selectedCareerLevel?.value) {
+                objectReq.semantic.careerLevel = [{
+                    careerLevel: this.selectedCareerLevel.value,
+                    importance: 'Required'
+                }]
+            }   
+            if (this.selectedRelocate?.value) {
+                objectReq.semantic.relocate = [{
+                    relocate: this.selectedRelocate.value,
+                    importance: 'Required'
+                }]
+            }
+            if (this.selectedTravelOption?.value) {
+                objectReq.semantic.travel = [{
+                    travel: this.selectedTravelOption.value,
+                    importance: 'Required'
                 }]
             }
             req = {
@@ -565,30 +815,39 @@ export class SearchResumesMonsterComponent implements OnInit {
             this.service.jobBoardAudit(auditReq).subscribe(x => { });
         }
 
-        this.service.getMonsterSearch(req).subscribe((x: any) => {
-            this.loading = false;
-            this.resultsFound = false;
-            let response = x;
-            this.rowData = response.candidates;
-            if (this.rowData.length > 0) {
+        this.service.getMonsterSearch(req).subscribe(
+            (x: any) => {
+              this.loading = false;
+              this.resultsFound = false;
+              let response = x;
+              this.rowData = response.candidates;
+              if (this.rowData.length > 0) {
                 this.resultsFound = true;
                 this.totalResults = response.boards[0].matched;
-                this.rowData.map((items: any) => {
-                    items.migrated = this.migratedProfiles.find(x => x.ATSID == items.identity.textResumeID) ? true : false;
-                    if (this.showcrediterror == true) {
-                        items.showmigrated = this.migratedProfiles.find(x => x.ATSID == items.EdgeID) ? true : false;
-                    }
-                    let item: any = items.relevance;
-                    if (item.skills) {
-                        items.skills = [];
-                        item.skills.forEach((itm: any) => {
-                            items.skills.push(itm.name);
-                        });
-                    }
+                this.rowData.forEach((items: any) => {
+                  items.migrated = this.migratedProfiles.find(x => x.ATSID == items.identity.textResumeID) ? true : false;
+                  if (this.showcrediterror) {
+                    items.showmigrated = this.migratedProfiles.find(x => x.ATSID == items.EdgeID) ? true : false;
+                  }
+                  let item: any = items.relevance;
+                  if (item.skills) {
+                    items.skills = [];
+                    item.skills.forEach((itm: any) => {
+                      items.skills.push(itm.name);
+                    });
+                  }
                 });
+              }
+              console.log('this.rowData', this.rowData);
+            },
+            (error: any) => {
+              // Error callback
+              console.error('Error occurred:', error);
+              // Handle error here
+              this.loading = false; // Set loading to false on error
             }
-            console.log('this.rowData', this.rowData)
-        });
+          );
+          
     }
 
     pageChanged(event: PageChangedEvent): void {
@@ -636,7 +895,7 @@ export class SearchResumesMonsterComponent implements OnInit {
                   console.log(x.result.length);
                   if (x.result.length == 0) {
                     this.showcrediterror = true;
-                    this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'No division credit found' });
+                    this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'No division credit found' });
                     reject('No division credit found');
                   } else {
                     this.creditcount = x.result[0].umonster;
@@ -692,7 +951,7 @@ export class SearchResumesMonsterComponent implements OnInit {
                   console.log(count);
                   if (count <= 0) {
                     this.showcrediterror = true;
-                    this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'You dont have enough credit to View Resume' });
+                    this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'You dont have enough credit to View Resume' });
                   }
                   resolve();
                 })
@@ -738,8 +997,39 @@ export class SearchResumesMonsterComponent implements OnInit {
     }
 
     public nocredits(){
-        this.messageService.add({ severity: 'warning', summary: 'Error', detail: 'You dont have enough credit to View Resume' });
+        this.messageService.add({ severity: 'warning', summary: 'Notification', detail: 'You dont have enough credit to View Resume' });
     }
+
+    ExportToDoc() {
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title></head><body>";
+      
+        const footer = "</body></html>";
+      
+        const html = header + ' ' + document.getElementById('printpdf')!.innerHTML+' ' + footer;
+      
+        console.log(html);
+        const blob = new Blob(['\ufeff', html], {
+          type: 'application/msword'
+        });
+      
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+      
+        var filename = this.cfullname  ? this.cfullname  + '.doc' : 'document.doc';
+      
+        if ((navigator as any).msSaveOrOpenBlob) {
+          // For Internet Explorer
+          (navigator as any).msSaveOrOpenBlob(blob, filename);
+        } else {
+          // For other browsers
+          const downloadLink = document.createElement('a');
+          downloadLink.href = url;
+          downloadLink.download = filename;
+          downloadLink.style.display = 'none';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+      }
 
 
 
@@ -767,6 +1057,7 @@ export interface SearchReqItem {
     country?: string;
     searchType?: string;
     semantic: {
+        jobTitles? :any[],
         booleanExpression?: {
             expression: string,
             importance: string
@@ -778,6 +1069,9 @@ export interface SearchReqItem {
                 importance: string
             }
         ],
+        careerLevel?:any[],
+        relocate?:any[],
+        travel?:any[],
         legalStatuses?: any[],
         securityClearances?: any[],
         locations?: [
@@ -791,6 +1085,12 @@ export interface SearchReqItem {
             }
         ],
         resumeUpdatedMaximumAge?: number,
+        Activemaxage?: number,
+        Lasttimeactive?: number,
+        Resumeupdatedmaxage?: number,
+        Maxtimeresumeupdated?: number,
+        Resumeupdatedminage?: number,
+        Mintimeresumeupdated?: number,
         willingnessToRelocate?: boolean,
         yearsOfExperience?: {
             expression: string,
@@ -807,9 +1107,10 @@ export interface MonsterProfileRequestItem {
     title?: string;
     currentLocation?: string;
     yearsOfExpInMonths?: string;
-    skills?: string;
+    skills?: string[];
     htmlResume?: string;
     source?: string;
     ATSID?: string;
     traineeId?: string | null;
+    securityclearance?: string | null;
 }

@@ -1,18 +1,20 @@
 
 .main {
-  border-top: 3px solid #46103d;
-  border-bottom: 3px solid #46103d;
+  border-top: 3px solid #482668;
+  border-bottom: 3px solid #482668;
 }
-.container {
+.container-fluid {
   background-color: #fff;
   
 }
 .bg-clr {
-  background-color: #46103d;
+  background-color: #482668;
 }
 
 
-
+.btn:hover{
+  background-color: #5d0aab;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -42,7 +44,7 @@ td{
   color: #94618e;
 }
 .row-border{
-  background-color: #46103d ;    
+  background-color: #482668 ;    
   height: max-content;
   
 }
@@ -51,10 +53,10 @@ i{
 }
 
 h2{
-  color: #46103d;
+  color: #482668;
 }
 .p{
-  color: #46103d;
+  color: #482668;
 }
 .modal {
   display: none;
@@ -83,11 +85,11 @@ h2{
 }
 
 .btn-bgcolor {
-  background-color: #46103d;
+  background-color: #482668;
 }
 
 .btn-outline-bgcolor {
-  background-color: #46103d;
+  background-color: #482668;
 }
 
 .align-center {

@@ -1,5 +1,5 @@
 .bg-clr {
-  background-color: #46103d;
+  background-color: #482668;
 }
 
 table {
@@ -11,7 +11,7 @@ table {
 .small-modal {
   max-width: 1000px;
 }
-.container{
+.container-fluid{
   background-color: #fff;
 }
 .small-modal .modal-content1 {
@@ -48,23 +48,23 @@ td {
 }
 
 i:hover {
-  color: #46103d;
+  color: #482668;
 }
 
 .row-border {
-  background-color: #46103d;
+  background-color: #482668;
   height: max-content;
 
 }
 
 .btn-bgcolor {
-  background-color: #46103d;
+  background-color: #482668;
 }
 
 .btn-wdth {
   width: 20%;
   margin-bottom: 15px;
-  background-color: #46103d;
+  background-color: #482668;
   text-align: center;
 }
 
@@ -76,16 +76,16 @@ i:hover {
 }
 
 .main {
-  border-top: 3px solid #46103d;
-  border-bottom: 3px solid #46103d;
+  border-top: 3px solid #482668;
+  border-bottom: 3px solid #482668;
 }
 
 .fa-edit {
-  color: #46103d;
+  color: #482668;
 }
 
 .fa-trash {
-  color: #46103d;
+  color: #482668;
 }
 
 label {
@@ -104,11 +104,11 @@ input {
 }
 
 h2 {
-  color: #46103d;
+  color: #482668;
 }
 
 .p {
-  color: #46103d;
+  color: #482668;
 }
 
 .modal {
@@ -139,38 +139,14 @@ h2 {
   height: min-content;
 }
 
-.modal1 {
-  position: absolute;
-  top: 30px;
-  width: 100%;
-  height: max-content;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000px;
-  display: grid;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content1 {
-  background: white;
-  padding: 50px;
-  border-radius: 6px;
-  text-align: center;
-  width: max-content;
-  height: max-content;
-  padding-top: 5%;
-  padding-bottom: 10%;
-
-}
-
 .modal2 {
-  position: absolute;
+  position: fixed;
   top: 20px;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000px;
-  display: grid;
+  z-index: 1000;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
